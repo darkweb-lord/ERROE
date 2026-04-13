@@ -1,22 +1,14 @@
-#include<libpic30.h>
+#ifndef I2C_HEADER_H
+#define I2C_HEADER_H
 
-#define	I2C_HEADER_H
-
-#ifdef	__cplusplus
-extern "C" {
-#endif
+#include <xc.h> // Added to ensure uint8_t and SFRs are known to headers
+#include <stdint.h>
 
 void I2C_INIT(void);
 void I2C1_WAIT(void);
 void I2C1_START(void);
 void I2C1_STOP(void);
-uint8_t I2C1_WRITE(uint8_t DATA);
+uint8_t I2C1_WRITE(uint8_t data);
 
-
-
-#ifdef	__cplusplus
-}
-#endif
-
-#endif	/* I2C_HEADER_H */
-
+#endif /* I2C_HEADER_H */ 
+// Removed the extra #endif that was on line 21

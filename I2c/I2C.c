@@ -1,15 +1,13 @@
-#include<stdint.h>
-#include"I2c_Header.h"
+#include <xc.h>         // This loads the p24FV32KA304.h definitions automatically
+#include "I2c_Header.h"
 
 void I2C_INIT(void){
     I2C1CON = 0x0000;
     I2C1STAT =0x0000;
     
-    I2C1BRG = 0x9D; // 157 SCL operate at 100Khz on 16MHz 
+    I2C1BRG = 39 ; // 157 SCL operate at 100KHz on 16MHz 
     I2C1CONbits.DISSLW = 1;
-    
-    IFS1bits.MI2C1IF = 0;
-    
+    IFS1bits.MI2C1IF = 0;  // Master Interrupt Flag
     I2C1CONbits.I2CEN = 1;
 }
 
