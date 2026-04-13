@@ -3,9 +3,8 @@
 #include "I2c_Header.h"
 #include "LCD_I2C.h"
 
-
 /*
-                        Main application
+Main application
  */
 int main(void)
 {
