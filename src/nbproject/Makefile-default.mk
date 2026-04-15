@@ -28,12 +28,12 @@ CP=cp
 CND_CONF=default
 ifeq ($(TYPE_IMAGE), DEBUG_RUN)
 IMAGE_TYPE=debug
-OUTPUT_SUFFIX=elf
+OUTPUT_SUFFIX=
 DEBUGGABLE_SUFFIX=elf
 FINAL_IMAGE=${DISTDIR}/src.${IMAGE_TYPE}.${OUTPUT_SUFFIX}
 else
 IMAGE_TYPE=production
-OUTPUT_SUFFIX=hex
+OUTPUT_SUFFIX=
 DEBUGGABLE_SUFFIX=elf
 FINAL_IMAGE=${DISTDIR}/src.${IMAGE_TYPE}.${OUTPUT_SUFFIX}
 endif
@@ -51,17 +51,17 @@ OBJECTDIR=build/${CND_CONF}/${IMAGE_TYPE}
 DISTDIR=dist/${CND_CONF}/${IMAGE_TYPE}
 
 # Source Files Quoted if spaced
-SOURCEFILES_QUOTED_IF_SPACED=main.c clock.c interrupt_manager.c pin_manager.c system.c I2C.c LCD.c
+SOURCEFILES_QUOTED_IF_SPACED=main.c clock.c interrupt_manager.c pin_manager.c system.c I2C.c LCD.c RTCC.c
 
 # Object Files Quoted if spaced
-OBJECTFILES_QUOTED_IF_SPACED=${OBJECTDIR}/main.o ${OBJECTDIR}/clock.o ${OBJECTDIR}/interrupt_manager.o ${OBJECTDIR}/pin_manager.o ${OBJECTDIR}/system.o ${OBJECTDIR}/I2C.o ${OBJECTDIR}/LCD.o
-POSSIBLE_DEPFILES=${OBJECTDIR}/main.o.d ${OBJECTDIR}/clock.o.d ${OBJECTDIR}/interrupt_manager.o.d ${OBJECTDIR}/pin_manager.o.d ${OBJECTDIR}/system.o.d ${OBJECTDIR}/I2C.o.d ${OBJECTDIR}/LCD.o.d
+OBJECTFILES_QUOTED_IF_SPACED=${OBJECTDIR}/main.o ${OBJECTDIR}/clock.o ${OBJECTDIR}/interrupt_manager.o ${OBJECTDIR}/pin_manager.o ${OBJECTDIR}/system.o ${OBJECTDIR}/I2C.o ${OBJECTDIR}/LCD.o ${OBJECTDIR}/RTCC.o
+POSSIBLE_DEPFILES=${OBJECTDIR}/main.o.d ${OBJECTDIR}/clock.o.d ${OBJECTDIR}/interrupt_manager.o.d ${OBJECTDIR}/pin_manager.o.d ${OBJECTDIR}/system.o.d ${OBJECTDIR}/I2C.o.d ${OBJECTDIR}/LCD.o.d ${OBJECTDIR}/RTCC.o.d
 
 # Object Files
-OBJECTFILES=${OBJECTDIR}/main.o ${OBJECTDIR}/clock.o ${OBJECTDIR}/interrupt_manager.o ${OBJECTDIR}/pin_manager.o ${OBJECTDIR}/system.o ${OBJECTDIR}/I2C.o ${OBJECTDIR}/LCD.o
+OBJECTFILES=${OBJECTDIR}/main.o ${OBJECTDIR}/clock.o ${OBJECTDIR}/interrupt_manager.o ${OBJECTDIR}/pin_manager.o ${OBJECTDIR}/system.o ${OBJECTDIR}/I2C.o ${OBJECTDIR}/LCD.o ${OBJECTDIR}/RTCC.o
 
 # Source Files
-SOURCEFILES=main.c clock.c interrupt_manager.c pin_manager.c system.c I2C.c LCD.c
+SOURCEFILES=main.c clock.c interrupt_manager.c pin_manager.c system.c I2C.c LCD.c RTCC.c
 
 
 
@@ -131,6 +131,12 @@ ${OBJECTDIR}/LCD.o: LCD.c  .generated_files/flags/default/cfbee958f508cbdb321bf4
 	@${RM} ${OBJECTDIR}/LCD.o 
 	${MP_CC} $(MP_EXTRA_CC_PRE)  LCD.c  -o ${OBJECTDIR}/LCD.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MP -MMD -MF "${OBJECTDIR}/LCD.o.d"      -g -D__DEBUG     -omf=elf -DXPRJ_default=$(CND_CONF)    $(COMPARISON_BUILD)  -O0 -msmart-io=1 -Wall -msfr-warn=off    -mdfp="${DFP_DIR}/xc16"
 	
+${OBJECTDIR}/RTCC.o: RTCC.c  .generated_files/flags/default/a70c520ce6183ccacb5dd4f233446bbd0e6c0f .generated_files/flags/default/da39a3ee5e6b4b0d3255bfef95601890afd80709
+	@${MKDIR} "${OBJECTDIR}" 
+	@${RM} ${OBJECTDIR}/RTCC.o.d 
+	@${RM} ${OBJECTDIR}/RTCC.o 
+	${MP_CC} $(MP_EXTRA_CC_PRE)  RTCC.c  -o ${OBJECTDIR}/RTCC.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MP -MMD -MF "${OBJECTDIR}/RTCC.o.d"      -g -D__DEBUG     -omf=elf -DXPRJ_default=$(CND_CONF)    $(COMPARISON_BUILD)  -O0 -msmart-io=1 -Wall -msfr-warn=off    -mdfp="${DFP_DIR}/xc16"
+	
 else
 ${OBJECTDIR}/main.o: main.c  .generated_files/flags/default/1d2e008b263862075551dbb4a28c02ab9544c8f1 .generated_files/flags/default/da39a3ee5e6b4b0d3255bfef95601890afd80709
 	@${MKDIR} "${OBJECTDIR}" 
@@ -173,6 +179,12 @@ ${OBJECTDIR}/LCD.o: LCD.c  .generated_files/flags/default/811951015ca852357f12c9
 	@${RM} ${OBJECTDIR}/LCD.o.d 
 	@${RM} ${OBJECTDIR}/LCD.o 
 	${MP_CC} $(MP_EXTRA_CC_PRE)  LCD.c  -o ${OBJECTDIR}/LCD.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MP -MMD -MF "${OBJECTDIR}/LCD.o.d"        -g -omf=elf -DXPRJ_default=$(CND_CONF)    $(COMPARISON_BUILD)  -O0 -msmart-io=1 -Wall -msfr-warn=off    -mdfp="${DFP_DIR}/xc16"
+	
+${OBJECTDIR}/RTCC.o: RTCC.c  .generated_files/flags/default/bf54d037721d263de721a1f75146112e31f1ef10 .generated_files/flags/default/da39a3ee5e6b4b0d3255bfef95601890afd80709
+	@${MKDIR} "${OBJECTDIR}" 
+	@${RM} ${OBJECTDIR}/RTCC.o.d 
+	@${RM} ${OBJECTDIR}/RTCC.o 
+	${MP_CC} $(MP_EXTRA_CC_PRE)  RTCC.c  -o ${OBJECTDIR}/RTCC.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MP -MMD -MF "${OBJECTDIR}/RTCC.o.d"        -g -omf=elf -DXPRJ_default=$(CND_CONF)    $(COMPARISON_BUILD)  -O0 -msmart-io=1 -Wall -msfr-warn=off    -mdfp="${DFP_DIR}/xc16"
 	
 endif
 
