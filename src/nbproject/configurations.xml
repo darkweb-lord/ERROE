@@ -10,6 +10,7 @@
       <itemPath>interrupt_manager.h</itemPath>
       <itemPath>pin_manager.h</itemPath>
       <itemPath>system.h</itemPath>
+      <itemPath>RTCC.h</itemPath>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"
@@ -24,12 +25,13 @@
                    displayName="Source Files"
                    projectFiles="true">
       <itemPath>main.c</itemPath>
-      <itemPath>LCD.c</itemPath>
-      <itemPath>I2C.c</itemPath>
       <itemPath>clock.c</itemPath>
       <itemPath>interrupt_manager.c</itemPath>
       <itemPath>pin_manager.c</itemPath>
       <itemPath>system.c</itemPath>
+      <itemPath>I2C.c</itemPath>
+      <itemPath>LCD.c</itemPath>
+      <itemPath>RTCC.c</itemPath>
     </logicalFolder>
   </logicalFolder>
   <sourceRootList>
