@@ -28,13 +28,29 @@ void I2C1_STOP(void){
     I2C1CONbits.PEN = 1;
 }
 
+void I2C1_RESTART(void){
+    I2C1_WAIT();
+    I2C1CONbits.RSEN = 1;
+}
+
 //return "0" if Slave ACKED, "1" if slave NACKED
 uint8_t I2C1_WRITE(uint8_t DATA){
-    
     I2C1_WAIT();
     I2C1TRN = DATA;
     I2C1_WAIT();
-    return I2C1STATbits.ACKSTAT; //0 = success, 1 = Fail
+    return I2C1STATbits.ACKSTAT; // 0 = success, 1 = Fail
 }
 
-
+uint8_t I2C1_READ(uint8_t ack){
+    uint8_t data;
+    I2C1_WAIT();
+    I2C1CONbits.RCEN = 1;       // Enable Receive mode
+    
+    while(!I2C1STATbits.RBF);    // Wait for buffer to fill
+    data = I2C1RCV;              // Read data
+    
+    I2C1_WAIT();
+    I2C1CONbits.ACKDT = ack;    // 0 = ACK, 1 = NACK
+    I2C1CONbits.ACKEN = 1;      // Send ACK/NACK
+    return data;
+}

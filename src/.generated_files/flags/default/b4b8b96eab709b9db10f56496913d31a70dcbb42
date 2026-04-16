@@ -1,0 +1,5 @@
+<<<<<<<< HEAD:src/.generated_files/flags/default/b4b8b96eab709b9db10f56496913d31a70dcbb42
+ -c -mcpu=$(MP_PROCESSOR_OPTION)      -g -D__DEBUG     -omf=elf -DXPRJ_default=$(CND_CONF)    $(COMPARISON_BUILD)  -O0 -msmart-io=1 -Wall -msfr-warn=off    -mdfp="${DFP_DIR}/xc16"D:\_DYNASPEDE\MPLAB x\_Remote\SEM\DYNASPEDE_SEM\src\main.c
+========
+ -c -mcpu=$(MP_PROCESSOR_OPTION)      -g -D__DEBUG     -omf=elf -DXPRJ_default=$(CND_CONF)    $(COMPARISON_BUILD)  -O0 -msmart-io=1 -Wall -msfr-warn=off    -mdfp="${DFP_DIR}/xc16"D:\_SG\03_Project's\SEM\DYNASPEDE_SEM\src\RTCC.c
+>>>>>>>> 57aeaf3b2db8e4c51d9ee0ff6bae0dfb0af00899:src/.generated_files/flags/default/a70c520ce6183ccacb5dd4f233446bbd0e6c0f
