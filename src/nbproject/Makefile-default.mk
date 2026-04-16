@@ -28,12 +28,12 @@ CP=cp
 CND_CONF=default
 ifeq ($(TYPE_IMAGE), DEBUG_RUN)
 IMAGE_TYPE=debug
-OUTPUT_SUFFIX=
+OUTPUT_SUFFIX=elf
 DEBUGGABLE_SUFFIX=elf
 FINAL_IMAGE=${DISTDIR}/src.${IMAGE_TYPE}.${OUTPUT_SUFFIX}
 else
 IMAGE_TYPE=production
-OUTPUT_SUFFIX=
+OUTPUT_SUFFIX=hex
 DEBUGGABLE_SUFFIX=elf
 FINAL_IMAGE=${DISTDIR}/src.${IMAGE_TYPE}.${OUTPUT_SUFFIX}
 endif
@@ -51,17 +51,17 @@ OBJECTDIR=build/${CND_CONF}/${IMAGE_TYPE}
 DISTDIR=dist/${CND_CONF}/${IMAGE_TYPE}
 
 # Source Files Quoted if spaced
-SOURCEFILES_QUOTED_IF_SPACED=main.c clock.c interrupt_manager.c pin_manager.c system.c I2C.c LCD.c RTCC.c
+SOURCEFILES_QUOTED_IF_SPACED=main.c clock.c interrupt_manager.c pin_manager.c system.c I2C.c LCD.c
 
 # Object Files Quoted if spaced
-OBJECTFILES_QUOTED_IF_SPACED=${OBJECTDIR}/main.o ${OBJECTDIR}/clock.o ${OBJECTDIR}/interrupt_manager.o ${OBJECTDIR}/pin_manager.o ${OBJECTDIR}/system.o ${OBJECTDIR}/I2C.o ${OBJECTDIR}/LCD.o ${OBJECTDIR}/RTCC.o
-POSSIBLE_DEPFILES=${OBJECTDIR}/main.o.d ${OBJECTDIR}/clock.o.d ${OBJECTDIR}/interrupt_manager.o.d ${OBJECTDIR}/pin_manager.o.d ${OBJECTDIR}/system.o.d ${OBJECTDIR}/I2C.o.d ${OBJECTDIR}/LCD.o.d ${OBJECTDIR}/RTCC.o.d
+OBJECTFILES_QUOTED_IF_SPACED=${OBJECTDIR}/main.o ${OBJECTDIR}/clock.o ${OBJECTDIR}/interrupt_manager.o ${OBJECTDIR}/pin_manager.o ${OBJECTDIR}/system.o ${OBJECTDIR}/I2C.o ${OBJECTDIR}/LCD.o
+POSSIBLE_DEPFILES=${OBJECTDIR}/main.o.d ${OBJECTDIR}/clock.o.d ${OBJECTDIR}/interrupt_manager.o.d ${OBJECTDIR}/pin_manager.o.d ${OBJECTDIR}/system.o.d ${OBJECTDIR}/I2C.o.d ${OBJECTDIR}/LCD.o.d
 
 # Object Files
-OBJECTFILES=${OBJECTDIR}/main.o ${OBJECTDIR}/clock.o ${OBJECTDIR}/interrupt_manager.o ${OBJECTDIR}/pin_manager.o ${OBJECTDIR}/system.o ${OBJECTDIR}/I2C.o ${OBJECTDIR}/LCD.o ${OBJECTDIR}/RTCC.o
+OBJECTFILES=${OBJECTDIR}/main.o ${OBJECTDIR}/clock.o ${OBJECTDIR}/interrupt_manager.o ${OBJECTDIR}/pin_manager.o ${OBJECTDIR}/system.o ${OBJECTDIR}/I2C.o ${OBJECTDIR}/LCD.o
 
 # Source Files
-SOURCEFILES=main.c clock.c interrupt_manager.c pin_manager.c system.c I2C.c LCD.c RTCC.c
+SOURCEFILES=main.c clock.c interrupt_manager.c pin_manager.c system.c I2C.c LCD.c
 
 
 
@@ -89,83 +89,31 @@ MP_LINKER_FILE_OPTION=,--script=p24FV32KA304.gld
 # ------------------------------------------------------------------------------------
 # Rules for buildStep: compile
 ifeq ($(TYPE_IMAGE), DEBUG_RUN)
-<<<<<<< Updated upstream
-<<<<<<< HEAD
-${OBJECTDIR}/main.o: main.c  .generated_files/flags/default/b4b8b96eab709b9db10f56496913d31a70dcbb42 .generated_files/flags/default/da39a3ee5e6b4b0d3255bfef95601890afd80709
-=======
-${OBJECTDIR}/main.o: main.c  .generated_files/flags/default/c0d6d1180cf420470860a56615b66d44ac6923ec .generated_files/flags/default/da39a3ee5e6b4b0d3255bfef95601890afd80709
->>>>>>> 57aeaf3b2db8e4c51d9ee0ff6bae0dfb0af00899
-=======
 ${OBJECTDIR}/main.o: main.c  .generated_files/flags/default/1bc351d04fbd264e4787819c12a28291ab9027b5 .generated_files/flags/default/da39a3ee5e6b4b0d3255bfef95601890afd80709
->>>>>>> Stashed changes
 	@${MKDIR} "${OBJECTDIR}" 
 	@${RM} ${OBJECTDIR}/main.o.d 
 	@${RM} ${OBJECTDIR}/main.o 
 	${MP_CC} $(MP_EXTRA_CC_PRE)  main.c  -o ${OBJECTDIR}/main.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MP -MMD -MF "${OBJECTDIR}/main.o.d"      -g -D__DEBUG     -omf=elf -DXPRJ_default=$(CND_CONF)    $(COMPARISON_BUILD)  -O0 -msmart-io=1 -Wall -msfr-warn=off    -mdfp="${DFP_DIR}/xc16"
 	
-<<<<<<< Updated upstream
-<<<<<<< HEAD
-${OBJECTDIR}/LCD.o: LCD.c  .generated_files/flags/default/ae94587c613f13c0ce6edbe1c4fb805b2f039679 .generated_files/flags/default/da39a3ee5e6b4b0d3255bfef95601890afd80709
-	@${MKDIR} "${OBJECTDIR}" 
-	@${RM} ${OBJECTDIR}/LCD.o.d 
-	@${RM} ${OBJECTDIR}/LCD.o 
-	${MP_CC} $(MP_EXTRA_CC_PRE)  LCD.c  -o ${OBJECTDIR}/LCD.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MP -MMD -MF "${OBJECTDIR}/LCD.o.d"      -g -D__DEBUG     -omf=elf -DXPRJ_default=$(CND_CONF)    $(COMPARISON_BUILD)  -O0 -msmart-io=1 -Wall -msfr-warn=off    -mdfp="${DFP_DIR}/xc16"
-	
-${OBJECTDIR}/I2C.o: I2C.c  .generated_files/flags/default/80750a7d80d5f68a499910f602c48f5a27a4a374 .generated_files/flags/default/da39a3ee5e6b4b0d3255bfef95601890afd80709
-	@${MKDIR} "${OBJECTDIR}" 
-	@${RM} ${OBJECTDIR}/I2C.o.d 
-	@${RM} ${OBJECTDIR}/I2C.o 
-	${MP_CC} $(MP_EXTRA_CC_PRE)  I2C.c  -o ${OBJECTDIR}/I2C.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MP -MMD -MF "${OBJECTDIR}/I2C.o.d"      -g -D__DEBUG     -omf=elf -DXPRJ_default=$(CND_CONF)    $(COMPARISON_BUILD)  -O0 -msmart-io=1 -Wall -msfr-warn=off    -mdfp="${DFP_DIR}/xc16"
-	
-${OBJECTDIR}/clock.o: clock.c  .generated_files/flags/default/2c94fd971530510b0392790ac0b3c917dd7234dc .generated_files/flags/default/da39a3ee5e6b4b0d3255bfef95601890afd80709
-=======
-${OBJECTDIR}/clock.o: clock.c  .generated_files/flags/default/5f5135e15d3ae14097e1dc0c080d08153d27db6d .generated_files/flags/default/da39a3ee5e6b4b0d3255bfef95601890afd80709
->>>>>>> 57aeaf3b2db8e4c51d9ee0ff6bae0dfb0af00899
-=======
 ${OBJECTDIR}/clock.o: clock.c  .generated_files/flags/default/745980ceb02d1480ec9c21c1d32c46f1705c673b .generated_files/flags/default/da39a3ee5e6b4b0d3255bfef95601890afd80709
->>>>>>> Stashed changes
 	@${MKDIR} "${OBJECTDIR}" 
 	@${RM} ${OBJECTDIR}/clock.o.d 
 	@${RM} ${OBJECTDIR}/clock.o 
 	${MP_CC} $(MP_EXTRA_CC_PRE)  clock.c  -o ${OBJECTDIR}/clock.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MP -MMD -MF "${OBJECTDIR}/clock.o.d"      -g -D__DEBUG     -omf=elf -DXPRJ_default=$(CND_CONF)    $(COMPARISON_BUILD)  -O0 -msmart-io=1 -Wall -msfr-warn=off    -mdfp="${DFP_DIR}/xc16"
 	
-<<<<<<< Updated upstream
-<<<<<<< HEAD
-${OBJECTDIR}/interrupt_manager.o: interrupt_manager.c  .generated_files/flags/default/4b1f0e047819e49663b7ab64bd014dcdefa592c6 .generated_files/flags/default/da39a3ee5e6b4b0d3255bfef95601890afd80709
-=======
-${OBJECTDIR}/interrupt_manager.o: interrupt_manager.c  .generated_files/flags/default/ed913f7b1cf574a1bb9f40866adcca4ec8caae99 .generated_files/flags/default/da39a3ee5e6b4b0d3255bfef95601890afd80709
->>>>>>> 57aeaf3b2db8e4c51d9ee0ff6bae0dfb0af00899
-=======
 ${OBJECTDIR}/interrupt_manager.o: interrupt_manager.c  .generated_files/flags/default/9959bea70d32608874b98389cbdc0abd0f1e0dff .generated_files/flags/default/da39a3ee5e6b4b0d3255bfef95601890afd80709
->>>>>>> Stashed changes
 	@${MKDIR} "${OBJECTDIR}" 
 	@${RM} ${OBJECTDIR}/interrupt_manager.o.d 
 	@${RM} ${OBJECTDIR}/interrupt_manager.o 
 	${MP_CC} $(MP_EXTRA_CC_PRE)  interrupt_manager.c  -o ${OBJECTDIR}/interrupt_manager.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MP -MMD -MF "${OBJECTDIR}/interrupt_manager.o.d"      -g -D__DEBUG     -omf=elf -DXPRJ_default=$(CND_CONF)    $(COMPARISON_BUILD)  -O0 -msmart-io=1 -Wall -msfr-warn=off    -mdfp="${DFP_DIR}/xc16"
 	
-<<<<<<< Updated upstream
-<<<<<<< HEAD
-${OBJECTDIR}/pin_manager.o: pin_manager.c  .generated_files/flags/default/dbf255d5c61fcf51ac17baa4bcc964185d4205cb .generated_files/flags/default/da39a3ee5e6b4b0d3255bfef95601890afd80709
-=======
-${OBJECTDIR}/pin_manager.o: pin_manager.c  .generated_files/flags/default/3e420831a33562512c4ac980339530c6c214b507 .generated_files/flags/default/da39a3ee5e6b4b0d3255bfef95601890afd80709
->>>>>>> 57aeaf3b2db8e4c51d9ee0ff6bae0dfb0af00899
-=======
 ${OBJECTDIR}/pin_manager.o: pin_manager.c  .generated_files/flags/default/920a514f3b7f94e28ba50b6281516aa376921f78 .generated_files/flags/default/da39a3ee5e6b4b0d3255bfef95601890afd80709
->>>>>>> Stashed changes
 	@${MKDIR} "${OBJECTDIR}" 
 	@${RM} ${OBJECTDIR}/pin_manager.o.d 
 	@${RM} ${OBJECTDIR}/pin_manager.o 
 	${MP_CC} $(MP_EXTRA_CC_PRE)  pin_manager.c  -o ${OBJECTDIR}/pin_manager.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MP -MMD -MF "${OBJECTDIR}/pin_manager.o.d"      -g -D__DEBUG     -omf=elf -DXPRJ_default=$(CND_CONF)    $(COMPARISON_BUILD)  -O0 -msmart-io=1 -Wall -msfr-warn=off    -mdfp="${DFP_DIR}/xc16"
 	
-<<<<<<< Updated upstream
-<<<<<<< HEAD
-${OBJECTDIR}/system.o: system.c  .generated_files/flags/default/b9cfae4fd4108edb025ec0b4c09b74a81b66b9c5 .generated_files/flags/default/da39a3ee5e6b4b0d3255bfef95601890afd80709
-=======
-${OBJECTDIR}/system.o: system.c  .generated_files/flags/default/29ec9eadc9af40a232ec9a3da8e8ffccb1ff096b .generated_files/flags/default/da39a3ee5e6b4b0d3255bfef95601890afd80709
->>>>>>> 57aeaf3b2db8e4c51d9ee0ff6bae0dfb0af00899
-=======
 ${OBJECTDIR}/system.o: system.c  .generated_files/flags/default/1269f0fec718cee27bf11d7de41162850557bf66 .generated_files/flags/default/da39a3ee5e6b4b0d3255bfef95601890afd80709
->>>>>>> Stashed changes
 	@${MKDIR} "${OBJECTDIR}" 
 	@${RM} ${OBJECTDIR}/system.o.d 
 	@${RM} ${OBJECTDIR}/system.o 
@@ -183,90 +131,32 @@ ${OBJECTDIR}/LCD.o: LCD.c  .generated_files/flags/default/c96354a2a168102a56cdd6
 	@${RM} ${OBJECTDIR}/LCD.o 
 	${MP_CC} $(MP_EXTRA_CC_PRE)  LCD.c  -o ${OBJECTDIR}/LCD.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MP -MMD -MF "${OBJECTDIR}/LCD.o.d"      -g -D__DEBUG     -omf=elf -DXPRJ_default=$(CND_CONF)    $(COMPARISON_BUILD)  -O0 -msmart-io=1 -Wall -msfr-warn=off    -mdfp="${DFP_DIR}/xc16"
 	
-${OBJECTDIR}/RTCC.o: RTCC.c  .generated_files/flags/default/a70c520ce6183ccacb5dd4f233446bbd0e6c0f .generated_files/flags/default/da39a3ee5e6b4b0d3255bfef95601890afd80709
-	@${MKDIR} "${OBJECTDIR}" 
-	@${RM} ${OBJECTDIR}/RTCC.o.d 
-	@${RM} ${OBJECTDIR}/RTCC.o 
-	${MP_CC} $(MP_EXTRA_CC_PRE)  RTCC.c  -o ${OBJECTDIR}/RTCC.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MP -MMD -MF "${OBJECTDIR}/RTCC.o.d"      -g -D__DEBUG     -omf=elf -DXPRJ_default=$(CND_CONF)    $(COMPARISON_BUILD)  -O0 -msmart-io=1 -Wall -msfr-warn=off    -mdfp="${DFP_DIR}/xc16"
-	
 else
-<<<<<<< Updated upstream
-<<<<<<< HEAD
-${OBJECTDIR}/main.o: main.c  .generated_files/flags/default/872709efbca43ccb008afb3727265efc781fab07 .generated_files/flags/default/da39a3ee5e6b4b0d3255bfef95601890afd80709
-=======
-${OBJECTDIR}/main.o: main.c  .generated_files/flags/default/1d2e008b263862075551dbb4a28c02ab9544c8f1 .generated_files/flags/default/da39a3ee5e6b4b0d3255bfef95601890afd80709
->>>>>>> 57aeaf3b2db8e4c51d9ee0ff6bae0dfb0af00899
-=======
 ${OBJECTDIR}/main.o: main.c  .generated_files/flags/default/a530096c133d60857006428e448fb571bc7dd37f .generated_files/flags/default/da39a3ee5e6b4b0d3255bfef95601890afd80709
->>>>>>> Stashed changes
 	@${MKDIR} "${OBJECTDIR}" 
 	@${RM} ${OBJECTDIR}/main.o.d 
 	@${RM} ${OBJECTDIR}/main.o 
 	${MP_CC} $(MP_EXTRA_CC_PRE)  main.c  -o ${OBJECTDIR}/main.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MP -MMD -MF "${OBJECTDIR}/main.o.d"        -g -omf=elf -DXPRJ_default=$(CND_CONF)    $(COMPARISON_BUILD)  -O0 -msmart-io=1 -Wall -msfr-warn=off    -mdfp="${DFP_DIR}/xc16"
 	
-<<<<<<< Updated upstream
-<<<<<<< HEAD
-${OBJECTDIR}/LCD.o: LCD.c  .generated_files/flags/default/8daa28dc6dc220268b48f932117a0c598adf0d5e .generated_files/flags/default/da39a3ee5e6b4b0d3255bfef95601890afd80709
-	@${MKDIR} "${OBJECTDIR}" 
-	@${RM} ${OBJECTDIR}/LCD.o.d 
-	@${RM} ${OBJECTDIR}/LCD.o 
-	${MP_CC} $(MP_EXTRA_CC_PRE)  LCD.c  -o ${OBJECTDIR}/LCD.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MP -MMD -MF "${OBJECTDIR}/LCD.o.d"        -g -omf=elf -DXPRJ_default=$(CND_CONF)    $(COMPARISON_BUILD)  -O0 -msmart-io=1 -Wall -msfr-warn=off    -mdfp="${DFP_DIR}/xc16"
-	
-${OBJECTDIR}/I2C.o: I2C.c  .generated_files/flags/default/bca361c2bceea5b775bb7f3b7ef428dd3f2e1d3c .generated_files/flags/default/da39a3ee5e6b4b0d3255bfef95601890afd80709
-	@${MKDIR} "${OBJECTDIR}" 
-	@${RM} ${OBJECTDIR}/I2C.o.d 
-	@${RM} ${OBJECTDIR}/I2C.o 
-	${MP_CC} $(MP_EXTRA_CC_PRE)  I2C.c  -o ${OBJECTDIR}/I2C.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MP -MMD -MF "${OBJECTDIR}/I2C.o.d"        -g -omf=elf -DXPRJ_default=$(CND_CONF)    $(COMPARISON_BUILD)  -O0 -msmart-io=1 -Wall -msfr-warn=off    -mdfp="${DFP_DIR}/xc16"
-	
-${OBJECTDIR}/clock.o: clock.c  .generated_files/flags/default/ade6d3627c7f352d28bff9d8868b5070e66518a7 .generated_files/flags/default/da39a3ee5e6b4b0d3255bfef95601890afd80709
-=======
-${OBJECTDIR}/clock.o: clock.c  .generated_files/flags/default/603197128b7ac018936879dcc9b701077e4c87c6 .generated_files/flags/default/da39a3ee5e6b4b0d3255bfef95601890afd80709
->>>>>>> 57aeaf3b2db8e4c51d9ee0ff6bae0dfb0af00899
-=======
 ${OBJECTDIR}/clock.o: clock.c  .generated_files/flags/default/b7794eef840877f66276f16d55e3ec6ed4225392 .generated_files/flags/default/da39a3ee5e6b4b0d3255bfef95601890afd80709
->>>>>>> Stashed changes
 	@${MKDIR} "${OBJECTDIR}" 
 	@${RM} ${OBJECTDIR}/clock.o.d 
 	@${RM} ${OBJECTDIR}/clock.o 
 	${MP_CC} $(MP_EXTRA_CC_PRE)  clock.c  -o ${OBJECTDIR}/clock.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MP -MMD -MF "${OBJECTDIR}/clock.o.d"        -g -omf=elf -DXPRJ_default=$(CND_CONF)    $(COMPARISON_BUILD)  -O0 -msmart-io=1 -Wall -msfr-warn=off    -mdfp="${DFP_DIR}/xc16"
 	
-<<<<<<< Updated upstream
-<<<<<<< HEAD
-${OBJECTDIR}/interrupt_manager.o: interrupt_manager.c  .generated_files/flags/default/3f84182458fff13ac0209eff9c85da07ed801427 .generated_files/flags/default/da39a3ee5e6b4b0d3255bfef95601890afd80709
-=======
-${OBJECTDIR}/interrupt_manager.o: interrupt_manager.c  .generated_files/flags/default/b4cdad5844d62a7de76595899154047496303c03 .generated_files/flags/default/da39a3ee5e6b4b0d3255bfef95601890afd80709
->>>>>>> 57aeaf3b2db8e4c51d9ee0ff6bae0dfb0af00899
-=======
 ${OBJECTDIR}/interrupt_manager.o: interrupt_manager.c  .generated_files/flags/default/e2f5c312a62b56ff0abee85eda406e0a66dd25b1 .generated_files/flags/default/da39a3ee5e6b4b0d3255bfef95601890afd80709
->>>>>>> Stashed changes
 	@${MKDIR} "${OBJECTDIR}" 
 	@${RM} ${OBJECTDIR}/interrupt_manager.o.d 
 	@${RM} ${OBJECTDIR}/interrupt_manager.o 
 	${MP_CC} $(MP_EXTRA_CC_PRE)  interrupt_manager.c  -o ${OBJECTDIR}/interrupt_manager.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MP -MMD -MF "${OBJECTDIR}/interrupt_manager.o.d"        -g -omf=elf -DXPRJ_default=$(CND_CONF)    $(COMPARISON_BUILD)  -O0 -msmart-io=1 -Wall -msfr-warn=off    -mdfp="${DFP_DIR}/xc16"
 	
-<<<<<<< Updated upstream
-<<<<<<< HEAD
-${OBJECTDIR}/pin_manager.o: pin_manager.c  .generated_files/flags/default/3fc0103c0fb002fbee35530ed4eff4b49e1c3d0a .generated_files/flags/default/da39a3ee5e6b4b0d3255bfef95601890afd80709
-=======
-${OBJECTDIR}/pin_manager.o: pin_manager.c  .generated_files/flags/default/b54abbd2fb7c0d563a3dcdc78bc83d3480dbc9de .generated_files/flags/default/da39a3ee5e6b4b0d3255bfef95601890afd80709
->>>>>>> 57aeaf3b2db8e4c51d9ee0ff6bae0dfb0af00899
-=======
 ${OBJECTDIR}/pin_manager.o: pin_manager.c  .generated_files/flags/default/359e7020bdc0baf15c06d280daf825acb59fc610 .generated_files/flags/default/da39a3ee5e6b4b0d3255bfef95601890afd80709
->>>>>>> Stashed changes
 	@${MKDIR} "${OBJECTDIR}" 
 	@${RM} ${OBJECTDIR}/pin_manager.o.d 
 	@${RM} ${OBJECTDIR}/pin_manager.o 
 	${MP_CC} $(MP_EXTRA_CC_PRE)  pin_manager.c  -o ${OBJECTDIR}/pin_manager.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MP -MMD -MF "${OBJECTDIR}/pin_manager.o.d"        -g -omf=elf -DXPRJ_default=$(CND_CONF)    $(COMPARISON_BUILD)  -O0 -msmart-io=1 -Wall -msfr-warn=off    -mdfp="${DFP_DIR}/xc16"
 	
-<<<<<<< Updated upstream
-<<<<<<< HEAD
-${OBJECTDIR}/system.o: system.c  .generated_files/flags/default/f46918eb2e386f1d83455c3c8b8b2cddf7b3f5f3 .generated_files/flags/default/da39a3ee5e6b4b0d3255bfef95601890afd80709
-=======
-${OBJECTDIR}/system.o: system.c  .generated_files/flags/default/daaa4693e5b25407ff14cb599a3206f91e72dd7 .generated_files/flags/default/da39a3ee5e6b4b0d3255bfef95601890afd80709
->>>>>>> 57aeaf3b2db8e4c51d9ee0ff6bae0dfb0af00899
-=======
 ${OBJECTDIR}/system.o: system.c  .generated_files/flags/default/5a4700962bbbcbd90fd08a90daec31dafe428554 .generated_files/flags/default/da39a3ee5e6b4b0d3255bfef95601890afd80709
->>>>>>> Stashed changes
 	@${MKDIR} "${OBJECTDIR}" 
 	@${RM} ${OBJECTDIR}/system.o.d 
 	@${RM} ${OBJECTDIR}/system.o 
@@ -283,12 +173,6 @@ ${OBJECTDIR}/LCD.o: LCD.c  .generated_files/flags/default/4caab3836d90c7d0329356
 	@${RM} ${OBJECTDIR}/LCD.o.d 
 	@${RM} ${OBJECTDIR}/LCD.o 
 	${MP_CC} $(MP_EXTRA_CC_PRE)  LCD.c  -o ${OBJECTDIR}/LCD.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MP -MMD -MF "${OBJECTDIR}/LCD.o.d"        -g -omf=elf -DXPRJ_default=$(CND_CONF)    $(COMPARISON_BUILD)  -O0 -msmart-io=1 -Wall -msfr-warn=off    -mdfp="${DFP_DIR}/xc16"
-	
-${OBJECTDIR}/RTCC.o: RTCC.c  .generated_files/flags/default/bf54d037721d263de721a1f75146112e31f1ef10 .generated_files/flags/default/da39a3ee5e6b4b0d3255bfef95601890afd80709
-	@${MKDIR} "${OBJECTDIR}" 
-	@${RM} ${OBJECTDIR}/RTCC.o.d 
-	@${RM} ${OBJECTDIR}/RTCC.o 
-	${MP_CC} $(MP_EXTRA_CC_PRE)  RTCC.c  -o ${OBJECTDIR}/RTCC.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MP -MMD -MF "${OBJECTDIR}/RTCC.o.d"        -g -omf=elf -DXPRJ_default=$(CND_CONF)    $(COMPARISON_BUILD)  -O0 -msmart-io=1 -Wall -msfr-warn=off    -mdfp="${DFP_DIR}/xc16"
 	
 endif
 
