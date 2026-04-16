@@ -27,16 +27,19 @@ int main(void)
    
     while (1)
     {
+        /*
+        LCD_CMD(0x01);
         LCD_SetCursor(0,0);
         LCD_PRINT("System Booting...");
         LCD_SetCursor(1,0);
         LCD_PRINT("Made by DISPL");
-        __delay_ms(1000);
-        
+        __delay_ms(2000);
+        */
         // Ask the RTC for the current time
         RTC_GetTime(&myTime);
         
         // Format the time into a string (HH:MM:SS)
+        LCD_CMD(0x01);
         sprintf(lcdBuffer, "Time: %02d:%02d:%02d", myTime.hour, myTime.min, myTime.sec);
         LCD_SetCursor(0,0);
         LCD_PRINT(lcdBuffer);
@@ -47,7 +50,7 @@ int main(void)
         LCD_PRINT(lcdBuffer);
         
         // Use a non-blocking timer in the future, but a small delay is fine for testing
-        // __delay_ms(200); 
+        __delay_ms(2000); 
     }
 
     return 1;
