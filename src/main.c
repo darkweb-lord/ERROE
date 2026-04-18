@@ -1,13 +1,19 @@
-#include "system.h"
 #include<xc.h>
+#include "system.h"
 #include "I2c_Header.h"
 #include "LCD_I2C.h"
 #include "RTCC.h"
 
+<<<<<<< HEAD
 #define FCY 16000000UL
 
+=======
+// 1. You MUST define FCY before including libpic30.h
+#define FCY 16000000UL 
+// 2. Now include the delay and standard IO libraries
+>>>>>>> 9dba688b64c6c147c33b05cfb0854c11829e92ba
 #include <libpic30.h>
-#include<stdio.h>
+#include <stdio.h>
 
 /*
 Main application
@@ -26,16 +32,19 @@ int main(void)
    
     while (1)
     {
+        /*
+        LCD_CMD(0x01);
         LCD_SetCursor(0,0);
         LCD_PRINT("System Booting...");
         LCD_SetCursor(1,0);
         LCD_PRINT("Made by DISPL");
-        __delay_ms(1000);
-        
+        __delay_ms(2000);
+        */
         // Ask the RTC for the current time
         RTC_GetTime(&myTime);
         
         // Format the time into a string (HH:MM:SS)
+        LCD_CMD(0x01);
         sprintf(lcdBuffer, "Time: %02d:%02d:%02d", myTime.hour, myTime.min, myTime.sec);
         LCD_SetCursor(0,0);
         LCD_PRINT(lcdBuffer);
@@ -46,7 +55,7 @@ int main(void)
         LCD_PRINT(lcdBuffer);
         
         // Use a non-blocking timer in the future, but a small delay is fine for testing
-        // __delay_ms(200); 
+        __delay_ms(2000); 
     }
 
     return 1;
