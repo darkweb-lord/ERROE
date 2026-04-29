@@ -1,7 +1,3 @@
-/**
-    Section: Includes
-*/
-
 #include <xc.h>
 #include <stdio.h>
 #include "pin_manager.h"

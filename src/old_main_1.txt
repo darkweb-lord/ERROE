@@ -218,14 +218,13 @@ int main(void) {
                     LCD_SetCursor(1,0); LCD_PRINT("Made by DISPL   ");
                     __delay_ms(2000); 
                     system_state = STATE_HOME;
-                    update_screen = 2 ;
+                    update_screen = 1;
                     break;
                     
                 case STATE_HOME:
                     RTC_GetTime(&rtc_time);
-                    sprintf(lcdBuffer, "Time:%02d:%02d:%02d", rtc_time.hour, rtc_time.min, rtc_time.sec);
+                    sprintf(lcdBuffer, "Time: %02d:%02d:%02d", rtc_time.hour, rtc_time.min, rtc_time.sec);
                     LCD_SetCursor(0,0); LCD_PRINT(lcdBuffer);
-                    __delay_ms(2000); 
                     LCD_SetCursor(1,0); LCD_PRINT("Hold BOTH ->Menu");
                     break;
                     
@@ -244,11 +243,8 @@ int main(void) {
                 case STATE_PAGE_0:
                 case STATE_PAGE_1:
                 case STATE_PAGE_2:
-                    RTC_GetTime(&rtc_time);
-                    sprintf(lcdBuffer, "Time: %02d:%02d:%02d", rtc_time.hour, rtc_time.min, rtc_time.sec);
+                    sprintf(lcdBuffer, "Inside Page_%d   ", menu_index);
                     LCD_SetCursor(0,0); LCD_PRINT(lcdBuffer);
-                    //sprintf(lcdBuffer, "Inside Page_%d   ", menu_index);
-                    //LCD_SetCursor(0,0); LCD_PRINT(lcdBuffer);
                     LCD_SetCursor(1,0); LCD_PRINT("Hold BOTH-> Back");
                     break;
                     
