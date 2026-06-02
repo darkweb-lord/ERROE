@@ -110,7 +110,7 @@ int main(void) {
             blink_state = 1;   // Force text to show immediately on press
             blink_timer = 0;
             
-            switch(system_state) {
+            switch(system_state){
                 case STATE_HOME:
                     if (btn_event == EVENT_BOTH_LONG) system_state = STATE_MENU;
                     break;
@@ -223,6 +223,7 @@ int main(void) {
                     
                 case STATE_HOME:
                     RTC_GetTime(&rtc_time);
+                    LCD_CLEAR();
                     sprintf(lcdBuffer, "Time:%02d:%02d:%02d", rtc_time.hour, rtc_time.min, rtc_time.sec);
                     LCD_SetCursor(0,0); LCD_PRINT(lcdBuffer);
                     __delay_ms(2000); 
@@ -247,8 +248,8 @@ int main(void) {
                     RTC_GetTime(&rtc_time);
                     sprintf(lcdBuffer, "Time: %02d:%02d:%02d", rtc_time.hour, rtc_time.min, rtc_time.sec);
                     LCD_SetCursor(0,0); LCD_PRINT(lcdBuffer);
-                    //sprintf(lcdBuffer, "Inside Page_%d   ", menu_index);
-                    //LCD_SetCursor(0,0); LCD_PRINT(lcdBuffer);
+                    sprintf(lcdBuffer, "Inside Page_%d   ", menu_index);
+                    LCD_SetCursor(0,0); LCD_PRINT(lcdBuffer);
                     LCD_SetCursor(1,0); LCD_PRINT("Hold BOTH-> Back");
                     break;
                     

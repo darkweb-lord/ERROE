@@ -13,6 +13,7 @@ void LCD_DATA(uint8_t);
 void LCD_INIT(void);
 void LCD_SetCursor(uint8_t , uint8_t );
 void LCD_PRINT(char*);
+void LCD_CLEAR(void);
 
 
 

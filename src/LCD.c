@@ -65,3 +65,9 @@ void LCD_PRINT(char* str) {
         LCD_DATA(*str++);
     }
 }
+
+// Clear the LCD screen
+void LCD_CLEAR(void){
+    LCD_CMD(0x01); 
+    __delay_ms(3);
+}
