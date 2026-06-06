@@ -1,92 +1,73 @@
-//Real-Time Clock and Calendar.- RTCC
-//IC - MCP79412
-
-
+#include <xc.h>
 #include "RTCC.h"
-#include "I2c_Header.h"
-
-#define RTC_WRITE_ADDR 0xDE
-#define RTC_READ_ADDR  0xDF
 
 // Helper Math Functions for BCD conversion
 uint8_t DecToBcd(uint8_t val) {
-    return ((val / 10) << 4) | (val % 10);
+    return (uint8_t)(((val / 10) << 4) | (val % 10));
 }
 
 uint8_t BcdToDec(uint8_t val) {
-    return ((val >> 4) * 10) + (val & 0x0F);
+    return (uint8_t)(((val >> 4) * 10) + (val & 0x0F));
 }
 
 void RTC_Init(void) {
-    // We do a dummy read to check if oscillator is already running.
-    // If you are setting the time later, the ST bit will be set automatically.
-    uint8_t sec_reg;
+    // 1. Enable Secondary Oscillator (SOSC) to drive the RTCC
+    __builtin_write_OSCCONL(OSCCON | 0x02); 
 
-    // --- STEP 1: Point to the Seconds Register (0x00) ---
-    I2C1_START();
-    I2C1_WRITE(RTC_WRITE_ADDR);
-    I2C1_WRITE(0x00);
+    // 2. Unlock the RTCC registers and Enable it
+    __builtin_write_RTCWEN(); 
+    RCFGCALbits.RTCEN = 1; 
+    RCFGCALbits.RTCWREN = 0; 
+
+    // 3. Safety Check: If the Month is '0', the clock will NEVER tick.
+    // We must read the month/date register to check.
+    RCFGCALbits.RTCPTR = 2; 
+    uint16_t current_month_date = RTCVAL;
     
-    // --- STEP 2: Read the Seconds Register ---
-    I2C1_RESTART();
-    I2C1_WRITE(RTC_READ_ADDR);
-    sec_reg = I2C1_READ(1); // 1 = Send NACK because we only want 1 byte
-    I2C1_STOP();
-
-    // --- STEP 3: Check the ST Bit (Bit 7) ---
-    // We use the bitwise AND mask (0x80 or 1000 0000 in binary) to check only bit 7.
-    if ((sec_reg & 0x80) == 0) {
-        
-        // The result is 0, meaning the clock is stopped!
-        // We must write the register back and force the ST bit to 1.
-        
-        I2C1_START();
-        I2C1_WRITE(RTC_WRITE_ADDR);
-        I2C1_WRITE(0x00);
-        
-        // Use bitwise OR (| 0x80) to keep the current seconds but set Bit 7 to 1
-        I2C1_WRITE(sec_reg | 0x80); 
-        
-        I2C1_STOP();
+    if (((current_month_date >> 8) & 0xFF) == 0x00) {
+        // If blank, inject a valid seed date: Jan 1, 2026, 00:00:00
+        RTC_TIME_t seed_time = {0, 0, 0, 1, 1, 1, 26};
+        RTC_SetTime(&seed_time);
     }
 }
 
-
 void RTC_SetTime(RTC_TIME_t *t) {
-    I2C1_START();
-    I2C1_WRITE(RTC_WRITE_ADDR);
-    I2C1_WRITE(0x00); // Start at Register 0x00 (Seconds)
+    __builtin_write_RTCWEN(); // Unlock sequence
     
-    // Write Time (And ensure ST bit 7 is '1' to start oscillator)
-    I2C1_WRITE(DecToBcd(t->sec) | 0x80); 
-    I2C1_WRITE(DecToBcd(t->min));
-    I2C1_WRITE(DecToBcd(t->hour)); // 24-hour mode by default (bit 6 = 0)
+    // Disable RTCC temporarily to write new values safely
+    RCFGCALbits.RTCEN = 0;    
     
-    // Write Date (And ensure VBATEN bit 3 is '1' to enable Battery Backup)
-    I2C1_WRITE(DecToBcd(t->day) | 0x08); 
-    I2C1_WRITE(DecToBcd(t->date));
-    I2C1_WRITE(DecToBcd(t->month));
-    I2C1_WRITE(DecToBcd(t->year));
+    // Set pointer to Year (3). 
+    // It will AUTO-DECREMENT after every write to RTCVAL.
+    RCFGCALbits.RTCPTR = 3; 
     
-    I2C1_STOP();
+    RTCVAL = DecToBcd(t->year);                               // Pointer drops to 2
+    RTCVAL = (DecToBcd(t->month) << 8) | DecToBcd(t->date);   // Pointer drops to 1
+    RTCVAL = (DecToBcd(t->day) << 8)   | DecToBcd(t->hour);   // Pointer drops to 0
+    RTCVAL = (DecToBcd(t->min) << 8)   | DecToBcd(t->sec);    // Finished
+    
+    // Re-enable and Lock
+    RCFGCALbits.RTCEN = 1;    
+    RCFGCALbits.RTCWREN = 0;  
 }
 
 void RTC_GetTime(RTC_TIME_t *t) {
-    I2C1_START();
-    I2C1_WRITE(RTC_WRITE_ADDR);
-    I2C1_WRITE(0x00); // Point to Register 0x00
+    // Wait until the RTCC is not actively rolling over before reading
+    while(RCFGCALbits.RTCSYNC == 1);
     
-    I2C1_RESTART();   // Change bus direction to READ
-    I2C1_WRITE(RTC_READ_ADDR);
+    // Reading RTCVAL automatically decrements the internal pointer
+    RCFGCALbits.RTCPTR = 3; 
     
-    // Read registers and mask out the control bits
-    t->sec   = BcdToDec(I2C1_READ(0) & 0x7F); // 0 = Send ACK
-    t->min   = BcdToDec(I2C1_READ(0) & 0x7F);
-    t->hour  = BcdToDec(I2C1_READ(0) & 0x3F);
-    t->day   = BcdToDec(I2C1_READ(0) & 0x07);
-    t->date  = BcdToDec(I2C1_READ(0) & 0x3F);
-    t->month = BcdToDec(I2C1_READ(0) & 0x1F);
-    t->year  = BcdToDec(I2C1_READ(1));        // 1 = Send NACK (Last byte)
+    uint16_t year_reg       = RTCVAL; // Pointer drops to 2
+    uint16_t month_date_reg = RTCVAL; // Pointer drops to 1
+    uint16_t wday_hour_reg  = RTCVAL; // Pointer drops to 0
+    uint16_t min_sec_reg    = RTCVAL; 
     
-    I2C1_STOP();
+    t->year  = BcdToDec(year_reg & 0xFF);
+    t->month = BcdToDec((month_date_reg >> 8) & 0xFF);
+    t->date  = BcdToDec(month_date_reg & 0xFF);
+    t->day   = BcdToDec((wday_hour_reg >> 8) & 0xFF);
+    t->hour  = BcdToDec(wday_hour_reg & 0xFF);
+    t->min   = BcdToDec((min_sec_reg >> 8) & 0xFF);
+    t->sec   = BcdToDec(min_sec_reg & 0xFF);
 }

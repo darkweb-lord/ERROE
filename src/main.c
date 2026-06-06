@@ -7,14 +7,13 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "I2c_Header.h"
-#include "LCD_I2C.h"
+#include "LCD.h"
 #include "RTCC.h"
 
 // --- Hardware Definitions ---
-#define KEY_1 PORTAbits.RA8   // Scroll Down / Increment / Toggle
-#define KEY_2 PORTCbits.RC2   // Scroll Up / Decrement / Toggle
-#define BTN_PRESSED 0         // Assuming buttons pull to Ground
+#define KEY_1 PORTAbits.RA8   // Button S4
+#define KEY_2 PORTBbits.RB3   // Button S5
+#define BTN_PRESSED 0         
 
 // --- System States ---
 typedef enum {
@@ -26,7 +25,7 @@ typedef enum {
     STATE_PAGE_2,
     STATE_PAGE_TIME,
     STATE_EDIT_RTC,
-    STATE_SAVE_PROMPT   // New State for Save confirmation
+    STATE_SAVE_PROMPT   
 } SystemState_t;
 
 // --- Button Event Types ---
@@ -39,16 +38,21 @@ typedef enum {
 
 // --- Global Variables ---
 SystemState_t system_state = STATE_BOOT;
-const char* menu_items[4] = {"1.Page_0", "2.Page_1", "3.Page_2", "4.Time/Date"};
+
+// Menu setup including Exit option
+#define NUM_MENU_ITEMS 5
+const char* menu_items[NUM_MENU_ITEMS] = {"1.Page_0", "2.Page_1", "3.Page_2", "4.Time/Date", "5.Exit Menu"};
 int8_t menu_index = 0;
+
 uint8_t update_screen = 1;
 RTC_TIME_t rtc_time;
+uint8_t last_second = 60; 
 
 // Edit Mode Variables
 RTC_TIME_t edit_time;
-uint8_t edit_field = 0; // 0=Hr, 1=Min, 2=Sec, 3=Date, 4=Month, 5=Year
-uint8_t save_choice = 1; // 1 = YES, 0 = NO
-uint8_t blink_state = 1; // Used to toggle text for blinking effect
+uint8_t edit_field = 0; 
+uint8_t save_choice = 1; 
+uint8_t blink_state = 1; 
 
 // --- Button Debounce Function ---
 ButtonEvent_t Read_Buttons(void) {
@@ -64,7 +68,7 @@ ButtonEvent_t Read_Buttons(void) {
     if (b1 && b2) {
         both_timer++;
         k1_timer = 0; k2_timer = 0;
-        if (both_timer > 100 && !long_triggered) { // 100 * 10ms = 1 Second
+        if (both_timer > 100 && !long_triggered) { 
             event = EVENT_BOTH_LONG;
             long_triggered = 1;
         }
@@ -75,7 +79,6 @@ ButtonEvent_t Read_Buttons(void) {
         k2_timer++;
         both_timer = 0; long_triggered = 0;
     } else {
-        // Buttons Released
         if (k1_timer > 5 && !long_triggered) event = EVENT_K1_SHORT;
         if (k2_timer > 5 && !long_triggered) event = EVENT_K2_SHORT;
         
@@ -87,27 +90,33 @@ ButtonEvent_t Read_Buttons(void) {
 // --- Main Application ---
 int main(void) {
     SYSTEM_Initialize();
-    I2C_INIT();
+    
     LCD_INIT();
     RTC_Init();
     
-    // Configure Pins for Buttons
-    TRISAbits.TRISA8 = 1; // Key 1 Input
-    TRISCbits.TRISC2 = 1; // Key 2 Input
-    ANSCbits.ANSC2 = 0;   // Disable Analog on RC2
-    
+    // Configure Pins for Buttons 
+    TRISAbits.TRISA8 = 1; 
+    TRISBbits.TRISB3 = 1; 
+    ANSBbits.ANSB3 = 0;   
+
     char lcdBuffer[17];
     uint16_t clock_tick = 0;
     uint16_t blink_timer = 0;
+    
+    // ==========================================
+    // SCROLLING TEXT VARIABLES
+    // ==========================================
+    uint16_t scroll_tick = 0; // Tracks the 10ms loop to control speed
+    uint16_t scroll_pos = 0;  // Tracks which letter is currently first on the LCD
 
     while (1) {
         // 1. Read Button Events
         ButtonEvent_t btn_event = Read_Buttons();
         
-        // 2. Handle State Transitions based on Buttons
+        // 2. Handle State Transitions
         if (btn_event != EVENT_NONE) {
-            update_screen = 1; // Force screen update on any button press
-            blink_state = 1;   // Force text to show immediately on press
+            update_screen = 1; 
+            blink_state = 1;   
             blink_timer = 0;
             
             switch(system_state){
@@ -116,92 +125,120 @@ int main(void) {
                     break;
                     
                 case STATE_MENU:
-                    if (btn_event == EVENT_K1_SHORT) { // Scroll Down
+                    if (btn_event == EVENT_K1_SHORT) { 
                         menu_index++;
-                        if (menu_index > 3) menu_index = 0;
+                        if (menu_index >= NUM_MENU_ITEMS) menu_index = 0;
                     }
-                    if (btn_event == EVENT_K2_SHORT) { // Scroll Up
+                    if (btn_event == EVENT_K2_SHORT) { 
                         menu_index--;
-                        if (menu_index < 0) menu_index = 3;
+                        if (menu_index < 0) menu_index = NUM_MENU_ITEMS - 1;
                     }
-                    if (btn_event == EVENT_BOTH_LONG) { // Enter Selected Page
+                    if (btn_event == EVENT_BOTH_LONG) { 
                         if (menu_index == 0) system_state = STATE_PAGE_0;
                         if (menu_index == 1) system_state = STATE_PAGE_1;
                         if (menu_index == 2) system_state = STATE_PAGE_2;
                         if (menu_index == 3) system_state = STATE_PAGE_TIME;
+                        if (menu_index == 4) {
+                            system_state = STATE_HOME;
+                            menu_index = 0; 
+                            LCD_CLEAR();    
+                        }
                     }
                     break;
                     
                 case STATE_PAGE_0:
                 case STATE_PAGE_1:
                 case STATE_PAGE_2:
-                    if (btn_event == EVENT_BOTH_LONG) system_state = STATE_MENU; // Go back
+                    if (btn_event == EVENT_BOTH_LONG) system_state = STATE_MENU;
                     break;
                     
                 case STATE_PAGE_TIME:
                     if (btn_event == EVENT_BOTH_LONG) {
-                        // Enter Edit Mode: Load current time into the editor
                         RTC_GetTime(&edit_time);
-                        edit_field = 0; // Start at Hour
+                        edit_field = 0; 
                         system_state = STATE_EDIT_RTC;
                     }
                     if (btn_event == EVENT_K1_SHORT || btn_event == EVENT_K2_SHORT) {
-                        system_state = STATE_MENU; // Go back to menu on short press
+                        system_state = STATE_MENU; 
                     }
                     break;
                     
                 case STATE_EDIT_RTC:
-                    if (btn_event == EVENT_BOTH_LONG) { // Next Field
+                    if (btn_event == EVENT_BOTH_LONG) { 
                         edit_field++;
                         if (edit_field > 5) {
-                            save_choice = 1; // Default to YES
-                            system_state = STATE_SAVE_PROMPT; // Go to save screen
+                            save_choice = 1; 
+                            system_state = STATE_SAVE_PROMPT; 
                         }
                     }
-                    else if (btn_event == EVENT_K1_SHORT) { // INCREMENT (+)
-                        if(edit_field == 0) { edit_time.hour++; if(edit_time.hour > 23) edit_time.hour = 0; }
-                        if(edit_field == 1) { edit_time.min++;  if(edit_time.min > 59) edit_time.min = 0; }
-                        if(edit_field == 2) { edit_time.sec++;  if(edit_time.sec > 59) edit_time.sec = 0; } 
-                        if(edit_field == 3) { edit_time.date++; if(edit_time.date > 31) edit_time.date = 1; }
-                        if(edit_field == 4) { edit_time.month++;if(edit_time.month > 12) edit_time.month = 1; }
-                        if(edit_field == 5) { edit_time.year++; if(edit_time.year > 99) edit_time.year = 0; }
+                    else if (btn_event == EVENT_K1_SHORT) { 
+                        if(edit_field==0) { edit_time.hour++; if(edit_time.hour>23) edit_time.hour=0; }
+                        if(edit_field==1) { edit_time.min++;  if(edit_time.min>59) edit_time.min=0; }
+                        if(edit_field==2) { edit_time.sec++;  if(edit_time.sec>59) edit_time.sec=0; } 
+                        if(edit_field==3) { edit_time.date++; if(edit_time.date>31) edit_time.date=1; }
+                        if(edit_field==4) { edit_time.month++;if(edit_time.month>12) edit_time.month=1; }
+                        if(edit_field==5) { edit_time.year++; if(edit_time.year>99) edit_time.year=0; }
                     }
-                    else if (btn_event == EVENT_K2_SHORT) { // DECREMENT (-)
-                        if(edit_field == 0) { if(edit_time.hour == 0) edit_time.hour = 23; else edit_time.hour--; }
-                        if(edit_field == 1) { if(edit_time.min == 0) edit_time.min = 59; else edit_time.min--; }
-                        if(edit_field == 2) { if(edit_time.sec == 0) edit_time.sec = 59; else edit_time.sec--; }
-                        if(edit_field == 3) { if(edit_time.date <= 1) edit_time.date = 31; else edit_time.date--; }
-                        if(edit_field == 4) { if(edit_time.month <= 1) edit_time.month = 12; else edit_time.month--; }
-                        if(edit_field == 5) { if(edit_time.year == 0) edit_time.year = 99; else edit_time.year--; }
+                    else if (btn_event == EVENT_K2_SHORT) { 
+                        if(edit_field==0) { if(edit_time.hour==0) edit_time.hour=23; else edit_time.hour--; }
+                        if(edit_field==1) { if(edit_time.min==0) edit_time.min=59; else edit_time.min--; }
+                        if(edit_field==2) { if(edit_time.sec==0) edit_time.sec=59; else edit_time.sec--; }
+                        if(edit_field==3) { if(edit_time.date<=1) edit_time.date=31; else edit_time.date--; }
+                        if(edit_field==4) { if(edit_time.month<=1) edit_time.month=12; else edit_time.month--; }
+                        if(edit_field==5) { if(edit_time.year==0) edit_time.year=99; else edit_time.year--; }
                     }
                     break;
                     
                 case STATE_SAVE_PROMPT:
                     if (btn_event == EVENT_K1_SHORT || btn_event == EVENT_K2_SHORT) {
-                        save_choice = !save_choice; // Toggle between YES and NO
+                        save_choice = !save_choice; 
                     }
                     if (btn_event == EVENT_BOTH_LONG) {
                         if (save_choice == 1) {
-                            RTC_SetTime(&edit_time); // Write new time to MCP79412
+                            RTC_SetTime(&edit_time); 
                         }
-                        system_state = STATE_PAGE_TIME; // Return to view mode
+                        system_state = STATE_PAGE_TIME; 
                     }
                     break;
             }
         }
         
-        // 3. Timers for Clock Updates and UI Blinking
+        // 3. System Timers
         if (system_state == STATE_HOME || system_state == STATE_PAGE_TIME) {
             clock_tick++;
-            if (clock_tick >= 100) { // 100 * 10ms = 1 sec
+            if (clock_tick >= 10) { 
                 clock_tick = 0;
-                update_screen = 1;
+                RTC_GetTime(&rtc_time);
+                if (rtc_time.sec != last_second) {
+                    last_second = rtc_time.sec;
+                    update_screen = 1; 
+                }
             }
         }
         
+        // ==========================================
+        // TEXT SCROLL SPEED CONTROLLER
+        // ==========================================
+        if (system_state == STATE_HOME) {
+            scroll_tick++;
+            
+            // TO CHANGE SPEED: Modify the '30' below.
+            // Fast Scroll: if (scroll_tick >= 15) (Shifts every 150ms)
+            // Medium Scroll: if (scroll_tick >= 30) (Shifts every 300ms)
+            // Slow Scroll: if (scroll_tick >= 50) (Shifts every 500ms / half-second)
+            // Very Slow Scroll: if (scroll_tick >= 100) (Shifts every 1 second)
+            
+            if (scroll_tick >= 50) { 
+                scroll_tick = 0;   // Reset the timer
+                scroll_pos++;      // Shift the text by 1 letter
+                update_screen = 1; // Tell the LCD to redraw
+            }
+        }
+        // ==========================================
+        
         if (system_state == STATE_EDIT_RTC) {
             blink_timer++;
-            if (blink_timer >= 50) { // 500ms blink rate
+            if (blink_timer >= 50) { 
                 blink_timer = 0;
                 blink_state = !blink_state;
                 update_screen = 1;
@@ -215,29 +252,51 @@ int main(void) {
             switch(system_state) {
                 case STATE_BOOT:
                     LCD_SetCursor(0,0); LCD_PRINT("System Booting..");
-                    LCD_SetCursor(1,0); LCD_PRINT("Made by DISPL   ");
+                    LCD_SetCursor(1,0); LCD_PRINT("Explorer 16/32  ");
                     __delay_ms(2000); 
+                    LCD_CLEAR();
                     system_state = STATE_HOME;
-                    update_screen = 2 ;
                     break;
                     
                 case STATE_HOME:
-                    RTC_GetTime(&rtc_time);
-                    LCD_CLEAR();
-                    sprintf(lcdBuffer, "Time:%02d:%02d:%02d", rtc_time.hour, rtc_time.min, rtc_time.sec);
-                    LCD_SetCursor(0,0); LCD_PRINT(lcdBuffer);
-                    __delay_ms(2000); 
-                    LCD_SetCursor(1,0); LCD_PRINT("Hold BOTH ->Menu");
+                    // A) Print the Real-Time Clock on the top line
+                    sprintf(lcdBuffer, "Time: %02d:%02d:%02d  ", rtc_time.hour, rtc_time.min, rtc_time.sec);
+                    LCD_SetCursor(1,0); LCD_PRINT(lcdBuffer);
+                    
+                    // B) Scrolling Text Engine on the bottom line
+                    {
+                        // 1. Define the message. Added extra spaces at the end so it loops cleanly.
+                        const char msg[] = "* Made by Dynaspede Integrated Private limited * "; 
+                        uint8_t msg_len = strlen(msg);
+                        
+                        // 2. Keep the tracker within the bounds of the string length
+                        if (scroll_pos >= msg_len) scroll_pos = 0;
+                        
+                        char scroll_buf[17]; // 16 characters for LCD + 1 for Null terminator '\0'
+                        
+                        // 3. Fill the buffer with 16 letters, starting from the current 'scroll_pos'
+                        for(int i = 0; i < 16; i++) {
+                            // The '%' (Modulo) operator automatically wraps back to the start 
+                            // of the string if it reaches the end, creating a continuous loop.
+                            scroll_buf[i] = msg[(scroll_pos + i) % msg_len];
+                        }
+                        scroll_buf[16] = '\0'; // Always cap off a C-string
+                        
+                        // 4. Print it
+                        LCD_SetCursor(0,0); 
+                        LCD_PRINT(scroll_buf);
+                    }
                     break;
                     
                 case STATE_MENU:
                     {
-                        int top_line = (menu_index == 3) ? 2 : menu_index; 
-                        
-                        sprintf(lcdBuffer, "%c%s             ", (menu_index == top_line) ? '>' : ' ', menu_items[top_line]);
+                        int top_line = menu_index;
+                        if (top_line >= NUM_MENU_ITEMS - 1) {
+                            top_line = NUM_MENU_ITEMS - 2; 
+                        }
+                        sprintf(lcdBuffer, "%c%-15s", (menu_index == top_line) ? '>' : ' ', menu_items[top_line]);
                         LCD_SetCursor(0,0); LCD_PRINT(lcdBuffer);
-                        
-                        sprintf(lcdBuffer, "%c%s             ", (menu_index == top_line+1) ? '>' : ' ', menu_items[top_line+1]);
+                        sprintf(lcdBuffer, "%c%-15s", (menu_index == top_line+1) ? '>' : ' ', menu_items[top_line+1]);
                         LCD_SetCursor(1,0); LCD_PRINT(lcdBuffer);
                     }
                     break;
@@ -246,18 +305,16 @@ int main(void) {
                 case STATE_PAGE_1:
                 case STATE_PAGE_2:
                     RTC_GetTime(&rtc_time);
-                    sprintf(lcdBuffer, "Time: %02d:%02d:%02d", rtc_time.hour, rtc_time.min, rtc_time.sec);
+                    sprintf(lcdBuffer, "Time: %02d:%02d:%02d  ", rtc_time.hour, rtc_time.min, rtc_time.sec);
                     LCD_SetCursor(0,0); LCD_PRINT(lcdBuffer);
                     sprintf(lcdBuffer, "Inside Page_%d   ", menu_index);
-                    LCD_SetCursor(0,0); LCD_PRINT(lcdBuffer);
-                    LCD_SetCursor(1,0); LCD_PRINT("Hold BOTH-> Back");
+                    LCD_SetCursor(1,0); LCD_PRINT(lcdBuffer);
                     break;
                     
                 case STATE_PAGE_TIME:
-                    RTC_GetTime(&rtc_time);
-                    sprintf(lcdBuffer, "Time: %02d:%02d:%02d", rtc_time.hour, rtc_time.min, rtc_time.sec);
+                    sprintf(lcdBuffer, "Time: %02d:%02d:%02d  ", rtc_time.hour, rtc_time.min, rtc_time.sec);
                     LCD_SetCursor(0,0); LCD_PRINT(lcdBuffer);
-                    sprintf(lcdBuffer, "Date: %02d/%02d/%02d", rtc_time.date, rtc_time.month, rtc_time.year);
+                    sprintf(lcdBuffer, "Date: %02d/%02d/%02d  ", rtc_time.date, rtc_time.month, rtc_time.year);
                     LCD_SetCursor(1,0); LCD_PRINT(lcdBuffer);
                     break;
                     
@@ -265,7 +322,6 @@ int main(void) {
                     {
                         char hr[3], mn[3], sc[3], dt[3], mo[3], yr[3];
                         
-                        // If it's the active field AND blink state is off, show spaces. Otherwise, show the number.
                         if(edit_field == 0 && !blink_state) strcpy(hr, "  "); else sprintf(hr, "%02d", edit_time.hour);
                         if(edit_field == 1 && !blink_state) strcpy(mn, "  "); else sprintf(mn, "%02d", edit_time.min);
                         if(edit_field == 2 && !blink_state) strcpy(sc, "  "); else sprintf(sc, "%02d", edit_time.sec);
@@ -273,10 +329,9 @@ int main(void) {
                         if(edit_field == 4 && !blink_state) strcpy(mo, "  "); else sprintf(mo, "%02d", edit_time.month);
                         if(edit_field == 5 && !blink_state) strcpy(yr, "  "); else sprintf(yr, "%02d", edit_time.year);
 
-                        sprintf(lcdBuffer, "Time: %s:%s:%s", hr, mn, sc);
+                        sprintf(lcdBuffer, "Time: %s:%s:%s  ", hr, mn, sc);
                         LCD_SetCursor(0,0); LCD_PRINT(lcdBuffer);
-                        
-                        sprintf(lcdBuffer, "Date: %s/%s/%s", dt, mo, yr);
+                        sprintf(lcdBuffer, "Date: %s/%s/%s  ", dt, mo, yr);
                         LCD_SetCursor(1,0); LCD_PRINT(lcdBuffer);
                     }
                     break;
@@ -292,7 +347,7 @@ int main(void) {
             }
         }
         
-        // 5. Global Super-Loop Tick (10ms)
+        // 5. Main Super-Loop Delay
         __delay_ms(10);
     }
     return 1;
