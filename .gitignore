@@ -1,0 +1,12 @@
+# Ignore MPLAB X generated folders
+src/build/
+src/dist/
+src/.generated_files/
+src/nbproject/private/
+
+# Ignore log and temp files
+*.log
+*.inx
+src/nbproject/Makefile-*
+src/nbproject/Makefile-genesis.properties
+src/nbproject/configurations.xml
