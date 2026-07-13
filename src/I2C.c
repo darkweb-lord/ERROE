@@ -1,11 +1,36 @@
+#define FCY 16000000UL      /* must come BEFORE libpic30.h */
 #include <xc.h>         // This loads the p24FV32KA304.h definitions automatically
+#include <libpic30.h>       /* provides __delay_us / __delay_ms */
 #include "I2c_Header.h"
+
+void I2C1_BUS_RECOVERY(void)
+{
+    I2C1CONbits.I2CEN = 0;        // release pins to GPIO
+
+    ODCB |= (1 << 5) | (1 << 6);  // RB5 (SDA) + RB6 (SCL) open-drain
+    TRISB |=  (1 << 5);           // SDA = input (read it)
+    TRISB &= ~(1 << 6);           // SCL = output
+    LATB  |=  (1 << 6);           // SCL high
+
+    for (int i = 0; i < 9; i++) {
+        if (PORTBbits.RB5) break;         // SDA released -> done
+        LATB &= ~(1 << 6); __delay_us(5); // SCL low
+        LATB |=  (1 << 6); __delay_us(5); // SCL high
+    }
+
+    // STOP condition: SDA low->high while SCL high
+    TRISB &= ~(1 << 5); LATB &= ~(1 << 5); __delay_us(5);  // SDA output low
+    LATB |= (1 << 6); __delay_us(5);                        // SCL high
+    LATB |= (1 << 5); __delay_us(5);                        // SDA high = STOP
+
+    TRISB |= (1 << 5) | (1 << 6);  // release both back to inputs
+}
 
 void I2C_INIT(void){
     I2C1CON = 0x0000;
     I2C1STAT =0x0000;
     
-    I2C1BRG = 39 ; // 157 SCL operate at 100KHz on 16MHz 
+    I2C1BRG = 157 ; // 157 SCL operate at 100KHz on 16MHz 
     I2C1CONbits.DISSLW = 1;
     IFS1bits.MI2C1IF = 0;  // Master Interrupt Flag
     I2C1CONbits.I2CEN = 1;

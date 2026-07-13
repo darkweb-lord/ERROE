@@ -1,4 +1,3 @@
-#include "system.h"
 #include <xc.h>
 
 // 1. MUST define FCY before libpic30.h for delays to work
@@ -6,7 +5,7 @@
 #include <libpic30.h>
 #include <stdio.h>
 #include <string.h>
-
+#include "system.h"
 #include "I2c_Header.h"
 #include "LCD_I2C.h"
 #include "RTCC.h"
@@ -87,6 +86,8 @@ ButtonEvent_t Read_Buttons(void) {
 // --- Main Application ---
 int main(void) {
     SYSTEM_Initialize();
+    __delay_ms(400);          /* FIX C2: rails + LSF0108 EN bias (RC=200ms; 4.3V @ ~393ms) */
+    I2C1_BUS_RECOVERY();      /* FIX C5: free a stuck slave before configuring the module */
     I2C_INIT();
     LCD_INIT();
     RTC_Init();
