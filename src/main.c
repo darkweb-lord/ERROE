@@ -68,7 +68,7 @@ ButtonEvent_t Read_Buttons(void) {
     if (b1 && b2) {
         both_timer++;
         k1_timer = 0; k2_timer = 0;
-        if (both_timer > 100 && !long_triggered) { // 100 * 10ms = 1 Second
+        if (both_timer > 50 && !long_triggered) { // 100 * 10ms = 1 Second
             event = EVENT_BOTH_LONG;
             long_triggered = 1;
         }
@@ -105,7 +105,13 @@ int main(void) {
     char lcdBuffer[17];
     uint16_t clock_tick = 0;
     uint16_t blink_timer = 0;
-
+ 
+    // ==========================================
+    // SCROLLING TEXT VARIABLES
+    // ==========================================
+    uint16_t scroll_tick = 0; // Tracks the 10ms loop to control speed
+    uint16_t scroll_pos = 0;  // Tracks which letter is currently first on the LCD
+    
     while (1) {
         // 1. Read Button Events
         ButtonEvent_t btn_event = Read_Buttons();
@@ -215,6 +221,24 @@ int main(void) {
                 }
             }
         }
+        // =======================================================================
+        // TEXT SCROLL SPEED CONTROLLER
+        // =======================================================================
+        // TO CHANGE SPEED: Modify the '30' below.
+        // Fast Scroll: if (scroll_tick >= 15) (Shifts every 150ms)
+        // Medium Scroll: if (scroll_tick >= 30) (Shifts every 300ms)
+        // Slow Scroll: if (scroll_tick >= 50) (Shifts every 500ms / half-second)
+        // Very Slow Scroll: if (scroll_tick >= 100) (Shifts every 1 second)
+        // =======================================================================
+        if (system_state == STATE_HOME) {
+            scroll_tick++;
+            if (scroll_tick >= 40) { 
+                scroll_tick = 0;   // Reset the timer
+                scroll_pos++;      // Shift the text by 1 letter
+                update_screen = 1; // Tell the LCD to redraw
+            }
+        }
+        // =======================================================================
         
         if (system_state == STATE_EDIT_RTC) {
             blink_timer++;
@@ -239,11 +263,33 @@ int main(void) {
                     break;
                     
                 case STATE_HOME:
+                    // A) Print the Real-Time Clock on the top line
                     RTC_GetTime(&rtc_time);
-                    //LCD_CLEAR();
-                    sprintf(lcdBuffer, "Time:%02d:%02d:%02d", rtc_time.hour, rtc_time.min, rtc_time.sec);
-                    LCD_SetCursor(0,0); LCD_PRINT(lcdBuffer); 
-                    LCD_SetCursor(1,0); LCD_PRINT("Hold BOTH ->Menu");
+                    sprintf(lcdBuffer, "Time: %02d:%02d:%02d  ", rtc_time.hour, rtc_time.min, rtc_time.sec);
+                    LCD_SetCursor(1,0); LCD_PRINT(lcdBuffer);
+                    
+                    // B) Scrolling Text Engine on the bottom line
+                    {
+                        // 1. Define the message. Added extra spaces at the end so it loops cleanly.
+                        const char msg[] = "-* MADE BY DYNASPEDE INTERGRATED PRIVATE LIMITED *"; 
+                        uint8_t msg_len = strlen(msg);
+                        
+                        // 2. Keep the tracker within the bounds of the string length
+                        if (scroll_pos >= msg_len) scroll_pos = 0;
+                        
+                        char scroll_buffer[17]; // 16 characters for LCD + 1 for Null terminator '\0'
+                        
+                        // 3. Fill the buffer with 16 letters, starting from the current 'scroll_pos'
+                        for(int i = 0; i < 16; i++) {
+                            // The '%' (Modulo) operator automatically wraps back to the start of the string if it reaches the end, creating a continuous loop.
+                            scroll_buffer[i] = msg[(scroll_pos + i) % msg_len];
+                        }
+                        scroll_buffer[16] = '\0'; // Always cap off a C-string
+                        
+                        // 4. Print it
+                        LCD_SetCursor(0,0); 
+                        LCD_PRINT(scroll_buffer);
+                    }
                     break;
                     
                 case STATE_MENU:
