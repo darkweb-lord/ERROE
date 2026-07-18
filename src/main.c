@@ -38,10 +38,15 @@ typedef enum {
 
 // --- Global Variables ---
 SystemState_t system_state = STATE_BOOT;
-const char* menu_items[4] = {"1.Page_0", "2.Page_1", "3.Page_2", "4.Time/Date"};
+
+//Menu setup including Exit option
+#define NUM_MENU_ITEMS 5
+const char* menu_items[NUM_MENU_ITEMS] = {"1.Page_0", "2.Page_1", "3.Page_2", "4.Time/Date","5.Menu Exit"};
 int8_t menu_index = 0;
+
 uint8_t update_screen = 1;
 RTC_TIME_t rtc_time;
+uint8_t last_second = 60;
 
 // Edit Mode Variables
 RTC_TIME_t edit_time;
@@ -119,17 +124,22 @@ int main(void) {
                 case STATE_MENU:
                     if (btn_event == EVENT_K1_SHORT) { // Scroll Down
                         menu_index++;
-                        if (menu_index > 3) menu_index = 0;
+                        if (menu_index >= NUM_MENU_ITEMS) menu_index = 0;
                     }
                     if (btn_event == EVENT_K2_SHORT) { // Scroll Up
                         menu_index--;
-                        if (menu_index < 0) menu_index = 3;
+                        if (menu_index < 0) menu_index = NUM_MENU_ITEMS - 1;
                     }
                     if (btn_event == EVENT_BOTH_LONG) { // Enter Selected Page
                         if (menu_index == 0) system_state = STATE_PAGE_0;
                         if (menu_index == 1) system_state = STATE_PAGE_1;
                         if (menu_index == 2) system_state = STATE_PAGE_2;
                         if (menu_index == 3) system_state = STATE_PAGE_TIME;
+                        if (menu_index == 4) { 
+                            system_state = STATE_HOME;
+                            menu_index = 0; 
+                            LCD_CLEAR();
+                        }
                     }
                     break;
                     
@@ -190,13 +200,19 @@ int main(void) {
                     break;
             }
         }
-        
-        // 3. Timers for Clock Updates and UI Blinking
+        // 3. Perfect Linear Clock Tracking
+        // Check the clock every ~100ms instead of counting loops. 
+        // This guarantees the display updates exactly when the hardware second ticks.
+        // Timers for Clock Updates and UI Blinking
         if (system_state == STATE_HOME || system_state == STATE_PAGE_TIME) {
             clock_tick++;
-            if (clock_tick >= 100) { // 100 * 10ms = 1 sec
+            if (clock_tick >= 10) { // 100 * 10ms = 1 sec
                 clock_tick = 0;
-                update_screen = 1;
+                RTC_GetTime(&rtc_time);
+                if (rtc_time.sec != last_second) {
+                    last_second = rtc_time.sec;
+                    update_screen = 1; // Update only when the second actually changes
+                }
             }
         }
         
@@ -217,28 +233,26 @@ int main(void) {
                 case STATE_BOOT:
                     LCD_SetCursor(0,0); LCD_PRINT("System Booting..");
                     LCD_SetCursor(1,0); LCD_PRINT("Made by DISPL   ");
-                    __delay_ms(2000); 
+                    __delay_ms(2000); LCD_CLEAR();
                     system_state = STATE_HOME;
                     update_screen = 2 ;
                     break;
                     
                 case STATE_HOME:
                     RTC_GetTime(&rtc_time);
-                    LCD_CLEAR();
+                    //LCD_CLEAR();
                     sprintf(lcdBuffer, "Time:%02d:%02d:%02d", rtc_time.hour, rtc_time.min, rtc_time.sec);
-                    LCD_SetCursor(0,0); LCD_PRINT(lcdBuffer);
-                    __delay_ms(2000); 
+                    LCD_SetCursor(0,0); LCD_PRINT(lcdBuffer); 
                     LCD_SetCursor(1,0); LCD_PRINT("Hold BOTH ->Menu");
                     break;
                     
                 case STATE_MENU:
                     {
-                        int top_line = (menu_index == 3) ? 2 : menu_index; 
+                        int top_line = (menu_index >= NUM_MENU_ITEMS - 1) ? (NUM_MENU_ITEMS - 2) : menu_index; 
                         
-                        sprintf(lcdBuffer, "%c%s             ", (menu_index == top_line) ? '>' : ' ', menu_items[top_line]);
+                        sprintf(lcdBuffer, "%c%-15s", (menu_index == top_line) ? '>' : ' ', menu_items[top_line]);
                         LCD_SetCursor(0,0); LCD_PRINT(lcdBuffer);
-                        
-                        sprintf(lcdBuffer, "%c%s             ", (menu_index == top_line+1) ? '>' : ' ', menu_items[top_line+1]);
+                        sprintf(lcdBuffer, "%c%-15s", (menu_index == top_line+1) ? '>' : ' ', menu_items[top_line+1]);
                         LCD_SetCursor(1,0); LCD_PRINT(lcdBuffer);
                     }
                     break;
@@ -246,9 +260,9 @@ int main(void) {
                 case STATE_PAGE_0:
                 case STATE_PAGE_1:
                 case STATE_PAGE_2:
-                    RTC_GetTime(&rtc_time);
-                    sprintf(lcdBuffer, "Time: %02d:%02d:%02d", rtc_time.hour, rtc_time.min, rtc_time.sec);
-                    LCD_SetCursor(0,0); LCD_PRINT(lcdBuffer);
+                    //RTC_GetTime(&rtc_time);
+                    //sprintf(lcdBuffer, "Time: %02d:%02d:%02d", rtc_time.hour, rtc_time.min, rtc_time.sec);
+                    //LCD_SetCursor(0,0); LCD_PRINT(lcdBuffer);
                     sprintf(lcdBuffer, "Inside Page_%d   ", menu_index);
                     LCD_SetCursor(0,0); LCD_PRINT(lcdBuffer);
                     LCD_SetCursor(1,0); LCD_PRINT("Hold BOTH-> Back");
