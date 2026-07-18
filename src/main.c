@@ -96,7 +96,21 @@ int main(void) {
     I2C_INIT();
     LCD_INIT();
     RTC_Init();
-    
+    /*******************************************************************************************
+    // 1. Check the cause of the Reset
+    if (RCONbits.SWR == 1) {
+        // A Software Reset occurred!
+        LCD_SetCursor(0,0);
+        LCD_PRINT("Software Reboot!");
+        RCONbits.SWR = 0;  // You MUST clear the flag so it is ready for next time
+    } else if (RCONbits.POR == 1) {
+        // A standard Power-On Reset occurred (plugged into power)
+        LCD_SetCursor(1,0);
+        LCD_PRINT("Power Applied!  ");
+        RCONbits.POR = 0; // Clear the Power-On flag
+    }
+    __delay_ms(2000); LCD_CLEAR();
+    *************************************************************************************/
     // Configure Pins for Buttons
     TRISAbits.TRISA8 = 1; // Key 1 Input
     TRISCbits.TRISC2 = 1; // Key 2 Input
@@ -112,7 +126,16 @@ int main(void) {
     uint16_t scroll_tick = 0; // Tracks the 10ms loop to control speed
     uint16_t scroll_pos = 0;  // Tracks which letter is currently first on the LCD
     
-    while (1) {
+    while (1) { 
+        /************************************************************************
+        // Example: Trigger a software reset if a critical error occurs
+        // or if a specific OTA update finishes downloading.
+        if (0)//some_critical_condition
+        {
+            __builtin_software_reset();
+        } 
+        *************************************************************************/
+        
         // 1. Read Button Events
         ButtonEvent_t btn_event = Read_Buttons();
         
