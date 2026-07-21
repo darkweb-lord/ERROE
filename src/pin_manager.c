@@ -11,10 +11,21 @@ void PIN_MANAGER_Initialize (void) {
     LATB = 0x0000;
     LATC = 0x0000;
 
-    // 2. Set Button Pins as Inputs (Explorer 16 Switches S4 & S5)
-    TRISAbits.TRISA8 = 1; // KEY_1
-    TRISBbits.TRISB3 = 1; // KEY_2
-
+    // 2. Setting the PIN Direction SFR(s)
+    TRISCbits.TRISC2 = 1; // KEY_1
+    TRISAbits.TRISA8 = 1; // KEY_2
+    
+    TRISCbits.TRISC8 = 1; // Tamper 
+    
     // 3. Disable Analog on digital pins
-    ANSBbits.ANSB3 = 0;   // Required to read the digital switch on RB3
+    ANSAbits.ANSA1 = 0;  // Spare 1 LED
+    ANSBbits.ANSB0 = 0;  // spare 2 LED
+    ANSBbits.ANSB1 = 0;  // spare 3 LED
+    ANSBbits.ANSB12 = 0; // RTCC MFP - Multi Function PIN
+    ANSBbits.ANSB2 = 0;  // R-Phase Relay
+    ANSBbits.ANSB3 = 0;  // Y-Phase Relay
+    ANSBbits.ANSB4 = 0;  // Metering_Master_Clear
+    ANSCbits.ANSC0 = 0;  // B-Phase Relay
+    ANSCbits.ANSC1 = 0;  // N-Neutral Relay
+    ANSCbits.ANSC2 = 0;  // KEY_1
 }

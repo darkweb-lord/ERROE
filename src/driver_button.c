@@ -5,8 +5,8 @@
 #include <xc.h>
 #include "driver_button.h"
 
-#define K1_PIN PORTAbits.RA8
-#define K2_PIN PORTBbits.RB3
+#define K1_PIN PORTCbits.RC2
+#define K2_PIN PORTAbits.RA8
 #define BTN_PRESSED 0
 
 ButtonEvent_t Button_Read_Matrix(void) {

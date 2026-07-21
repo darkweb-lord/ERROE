@@ -7,7 +7,10 @@
 #include <stdint.h>
 
 typedef enum { 
-    EVENT_NONE, EVENT_K1_SHORT, EVENT_K2_SHORT, EVENT_BOTH_LONG 
+    EVENT_NONE, 
+    EVENT_K1_SHORT,
+    EVENT_K2_SHORT, 
+    EVENT_BOTH_LONG 
 } ButtonEvent_t;
 
 ButtonEvent_t Button_Read_Matrix(void);
