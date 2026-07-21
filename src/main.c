@@ -1,4 +1,3 @@
-#include "system.h"
 #include <xc.h>
 
 // 1. MUST define FCY before libpic30.h for delays to work
@@ -6,7 +5,7 @@
 #include <libpic30.h>
 #include <stdio.h>
 #include <string.h>
-
+#include "system.h"
 #include "I2c_Header.h"
 #include "LCD_I2C.h"
 #include "RTCC.h"
@@ -39,10 +38,15 @@ typedef enum {
 
 // --- Global Variables ---
 SystemState_t system_state = STATE_BOOT;
-const char* menu_items[4] = {"1.Page_0", "2.Page_1", "3.Page_2", "4.Time/Date"};
+
+//Menu setup including Exit option
+#define NUM_MENU_ITEMS 5
+const char* menu_items[NUM_MENU_ITEMS] = {"1.Page_0", "2.Page_1", "3.Page_2", "4.Time/Date","5.Menu Exit"};
 int8_t menu_index = 0;
+
 uint8_t update_screen = 1;
 RTC_TIME_t rtc_time;
+uint8_t last_second = 60;
 
 // Edit Mode Variables
 RTC_TIME_t edit_time;
@@ -64,7 +68,7 @@ ButtonEvent_t Read_Buttons(void) {
     if (b1 && b2) {
         both_timer++;
         k1_timer = 0; k2_timer = 0;
-        if (both_timer > 100 && !long_triggered) { // 100 * 10ms = 1 Second
+        if (both_timer > 50 && !long_triggered) { // 100 * 10ms = 1 Second
             event = EVENT_BOTH_LONG;
             long_triggered = 1;
         }
@@ -87,10 +91,26 @@ ButtonEvent_t Read_Buttons(void) {
 // --- Main Application ---
 int main(void) {
     SYSTEM_Initialize();
+    __delay_ms(400);          /* FIX C2: rails + LSF0108 EN bias (RC=200ms; 4.3V @ ~393ms) */
+    I2C1_BUS_RECOVERY();      /* FIX C5: free a stuck slave before configuring the module */
     I2C_INIT();
     LCD_INIT();
     RTC_Init();
-    
+    /*******************************************************************************************
+    // 1. Check the cause of the Reset
+    if (RCONbits.SWR == 1) {
+        // A Software Reset occurred!
+        LCD_SetCursor(0,0);
+        LCD_PRINT("Software Reboot!");
+        RCONbits.SWR = 0;  // You MUST clear the flag so it is ready for next time
+    } else if (RCONbits.POR == 1) {
+        // A standard Power-On Reset occurred (plugged into power)
+        LCD_SetCursor(1,0);
+        LCD_PRINT("Power Applied!  ");
+        RCONbits.POR = 0; // Clear the Power-On flag
+    }
+    __delay_ms(2000); LCD_CLEAR();
+    *************************************************************************************/
     // Configure Pins for Buttons
     TRISAbits.TRISA8 = 1; // Key 1 Input
     TRISCbits.TRISC2 = 1; // Key 2 Input
@@ -99,8 +119,23 @@ int main(void) {
     char lcdBuffer[17];
     uint16_t clock_tick = 0;
     uint16_t blink_timer = 0;
-
-    while (1) {
+ 
+    // ==========================================
+    // SCROLLING TEXT VARIABLES
+    // ==========================================
+    uint16_t scroll_tick = 0; // Tracks the 10ms loop to control speed
+    uint16_t scroll_pos = 0;  // Tracks which letter is currently first on the LCD
+    
+    while (1) { 
+        /************************************************************************
+        // Example: Trigger a software reset if a critical error occurs
+        // or if a specific OTA update finishes downloading.
+        if (0)//some_critical_condition
+        {
+            __builtin_software_reset();
+        } 
+        *************************************************************************/
+        
         // 1. Read Button Events
         ButtonEvent_t btn_event = Read_Buttons();
         
@@ -118,17 +153,22 @@ int main(void) {
                 case STATE_MENU:
                     if (btn_event == EVENT_K1_SHORT) { // Scroll Down
                         menu_index++;
-                        if (menu_index > 3) menu_index = 0;
+                        if (menu_index >= NUM_MENU_ITEMS) menu_index = 0;
                     }
                     if (btn_event == EVENT_K2_SHORT) { // Scroll Up
                         menu_index--;
-                        if (menu_index < 0) menu_index = 3;
+                        if (menu_index < 0) menu_index = NUM_MENU_ITEMS - 1;
                     }
                     if (btn_event == EVENT_BOTH_LONG) { // Enter Selected Page
                         if (menu_index == 0) system_state = STATE_PAGE_0;
                         if (menu_index == 1) system_state = STATE_PAGE_1;
                         if (menu_index == 2) system_state = STATE_PAGE_2;
                         if (menu_index == 3) system_state = STATE_PAGE_TIME;
+                        if (menu_index == 4) { 
+                            system_state = STATE_HOME;
+                            menu_index = 0; 
+                            LCD_CLEAR();
+                        }
                     }
                     break;
                     
@@ -189,15 +229,39 @@ int main(void) {
                     break;
             }
         }
-        
-        // 3. Timers for Clock Updates and UI Blinking
+        // 3. Perfect Linear Clock Tracking
+        // Check the clock every ~100ms instead of counting loops. 
+        // This guarantees the display updates exactly when the hardware second ticks.
+        // Timers for Clock Updates and UI Blinking
         if (system_state == STATE_HOME || system_state == STATE_PAGE_TIME) {
             clock_tick++;
-            if (clock_tick >= 100) { // 100 * 10ms = 1 sec
+            if (clock_tick >= 10) { // 100 * 10ms = 1 sec
                 clock_tick = 0;
-                update_screen = 1;
+                RTC_GetTime(&rtc_time);
+                if (rtc_time.sec != last_second) {
+                    last_second = rtc_time.sec;
+                    update_screen = 1; // Update only when the second actually changes
+                }
             }
         }
+        // =======================================================================
+        // TEXT SCROLL SPEED CONTROLLER
+        // =======================================================================
+        // TO CHANGE SPEED: Modify the '30' below.
+        // Fast Scroll: if (scroll_tick >= 15) (Shifts every 150ms)
+        // Medium Scroll: if (scroll_tick >= 30) (Shifts every 300ms)
+        // Slow Scroll: if (scroll_tick >= 50) (Shifts every 500ms / half-second)
+        // Very Slow Scroll: if (scroll_tick >= 100) (Shifts every 1 second)
+        // =======================================================================
+        if (system_state == STATE_HOME) {
+            scroll_tick++;
+            if (scroll_tick >= 40) { 
+                scroll_tick = 0;   // Reset the timer
+                scroll_pos++;      // Shift the text by 1 letter
+                update_screen = 1; // Tell the LCD to redraw
+            }
+        }
+        // =======================================================================
         
         if (system_state == STATE_EDIT_RTC) {
             blink_timer++;
@@ -216,28 +280,48 @@ int main(void) {
                 case STATE_BOOT:
                     LCD_SetCursor(0,0); LCD_PRINT("System Booting..");
                     LCD_SetCursor(1,0); LCD_PRINT("Made by DISPL   ");
-                    __delay_ms(2000); 
+                    __delay_ms(2000); LCD_CLEAR();
                     system_state = STATE_HOME;
                     update_screen = 2 ;
                     break;
                     
                 case STATE_HOME:
+                    // A) Print the Real-Time Clock on the top line
                     RTC_GetTime(&rtc_time);
-                    LCD_CLEAR();
-                    sprintf(lcdBuffer, "Time:%02d:%02d:%02d", rtc_time.hour, rtc_time.min, rtc_time.sec);
-                    LCD_SetCursor(0,0); LCD_PRINT(lcdBuffer);
-                    __delay_ms(2000); 
-                    LCD_SetCursor(1,0); LCD_PRINT("Hold BOTH ->Menu");
+                    sprintf(lcdBuffer, "Time: %02d:%02d:%02d  ", rtc_time.hour, rtc_time.min, rtc_time.sec);
+                    LCD_SetCursor(1,0); LCD_PRINT(lcdBuffer);
+                    
+                    // B) Scrolling Text Engine on the bottom line
+                    {
+                        // 1. Define the message. Added extra spaces at the end so it loops cleanly.
+                        const char msg[] = "-* MADE BY DYNASPEDE INTERGRATED PRIVATE LIMITED *"; 
+                        uint8_t msg_len = strlen(msg);
+                        
+                        // 2. Keep the tracker within the bounds of the string length
+                        if (scroll_pos >= msg_len) scroll_pos = 0;
+                        
+                        char scroll_buffer[17]; // 16 characters for LCD + 1 for Null terminator '\0'
+                        
+                        // 3. Fill the buffer with 16 letters, starting from the current 'scroll_pos'
+                        for(int i = 0; i < 16; i++) {
+                            // The '%' (Modulo) operator automatically wraps back to the start of the string if it reaches the end, creating a continuous loop.
+                            scroll_buffer[i] = msg[(scroll_pos + i) % msg_len];
+                        }
+                        scroll_buffer[16] = '\0'; // Always cap off a C-string
+                        
+                        // 4. Print it
+                        LCD_SetCursor(0,0); 
+                        LCD_PRINT(scroll_buffer);
+                    }
                     break;
                     
                 case STATE_MENU:
                     {
-                        int top_line = (menu_index == 3) ? 2 : menu_index; 
+                        int top_line = (menu_index >= NUM_MENU_ITEMS - 1) ? (NUM_MENU_ITEMS - 2) : menu_index; 
                         
-                        sprintf(lcdBuffer, "%c%s             ", (menu_index == top_line) ? '>' : ' ', menu_items[top_line]);
+                        sprintf(lcdBuffer, "%c%-15s", (menu_index == top_line) ? '>' : ' ', menu_items[top_line]);
                         LCD_SetCursor(0,0); LCD_PRINT(lcdBuffer);
-                        
-                        sprintf(lcdBuffer, "%c%s             ", (menu_index == top_line+1) ? '>' : ' ', menu_items[top_line+1]);
+                        sprintf(lcdBuffer, "%c%-15s", (menu_index == top_line+1) ? '>' : ' ', menu_items[top_line+1]);
                         LCD_SetCursor(1,0); LCD_PRINT(lcdBuffer);
                     }
                     break;
@@ -245,9 +329,9 @@ int main(void) {
                 case STATE_PAGE_0:
                 case STATE_PAGE_1:
                 case STATE_PAGE_2:
-                    RTC_GetTime(&rtc_time);
-                    sprintf(lcdBuffer, "Time: %02d:%02d:%02d", rtc_time.hour, rtc_time.min, rtc_time.sec);
-                    LCD_SetCursor(0,0); LCD_PRINT(lcdBuffer);
+                    //RTC_GetTime(&rtc_time);
+                    //sprintf(lcdBuffer, "Time: %02d:%02d:%02d", rtc_time.hour, rtc_time.min, rtc_time.sec);
+                    //LCD_SetCursor(0,0); LCD_PRINT(lcdBuffer);
                     sprintf(lcdBuffer, "Inside Page_%d   ", menu_index);
                     LCD_SetCursor(0,0); LCD_PRINT(lcdBuffer);
                     LCD_SetCursor(1,0); LCD_PRINT("Hold BOTH-> Back");
