@@ -1,48 +1,20 @@
+/**
+ * @file pin_manager.c
+ * @brief Sets initial pin states and analog/digital modes.
+ */
 #include <xc.h>
-#include <stdio.h>
 #include "pin_manager.h"
 
-/**
- Section: Driver Interface Function Definitions
-*/
-void PIN_MANAGER_Initialize (void)
-{
-    /****************************************************************************
-     * Setting the Output Latch SFR(s)
-     ***************************************************************************/
+void PIN_MANAGER_Initialize (void) {
+    // 1. Clear Latches to prevent voltage spikes
     LATA = 0x0000;
     LATB = 0x0000;
     LATC = 0x0000;
 
-    /****************************************************************************
-     * Setting the GPIO Direction SFR(s)
-     ***************************************************************************/
-    TRISA = 0x0F97;
-    TRISB = 0xFFFF;
-    TRISC = 0x03FF;
+    // 2. Set Button Pins as Inputs (Explorer 16 Switches S4 & S5)
+    TRISAbits.TRISA8 = 1; // KEY_1
+    TRISBbits.TRISB3 = 1; // KEY_2
 
-    /****************************************************************************
-     * Setting the Weak Pull Up and Weak Pull Down SFR(s)
-     ***************************************************************************/
-    CNPD1 = 0x0000;
-    CNPD2 = 0x0000;
-    CNPD3 = 0x0000;
-    CNPU1 = 0x0000;
-    CNPU2 = 0x0000;
-    CNPU3 = 0x0000;
-
-    /****************************************************************************
-     * Setting the Open Drain SFR(s)
-     ***************************************************************************/
-    ODCA = 0x0000;
-    ODCB = 0x0060; //RB5 & RB6 as open Drain
-    ODCC = 0x0000;
-
-    /****************************************************************************
-     * Setting the Analog/Digital Configuration SFR(s)
-     ***************************************************************************/
-    ANSA = 0x000F;
-    ANSB = 0xF01F;
-    ANSC = 0x0007;
+    // 3. Disable Analog on digital pins
+    ANSBbits.ANSB3 = 0;   // Required to read the digital switch on RB3
 }
-
