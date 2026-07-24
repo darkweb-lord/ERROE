@@ -44,5 +44,29 @@ void PIN_MANAGER_Initialize (void)
     ANSA = 0x000F;
     ANSB = 0xF01F;
     ANSC = 0x0007;
+    
+    // ==========================================
+    // ATSENSE301 Metering IC Pin Configuration
+    // ==========================================
+    // Control Pins
+    TRISBbits.TRISB4 = 0; // PIN 33 (RB4): meteringMclr - Output
+    TRISAbits.TRISA4 = 1; // PIN 34 (RA4): metering_interrupt - Input
+    
+    // SPI1 Data/Clock Pins
+    TRISAbits.TRISA9 = 0; // PIN 35 (RA9): chip select - Output
+    TRISCbits.TRISC3 = 1; // PIN 36 (RC3): MISO (SDI1) - Input
+    TRISCbits.TRISC4 = 0; // PIN 37 (RC4): MOSI (SDO1) - Output
+    TRISCbits.TRISC5 = 0; // PIN 38 (RC5): Clock (SCK1) - Output
+
+    // ==========================================
+    // Analog Function Disablement (CRITICAL)
+    // ==========================================
+    ANSBbits.ANSB13 = 0;  // Force RB13 (Button) to Digital Mode
+    ANSBbits.ANSB4 = 0;   // Force RB4 (meteringMclr) to Digital Mode
+    
+    // Set default initial states for active-low outputs
+    LATAbits.LATA9 = 1;   // CS High (Deselected)
+    LATBbits.LATB4 = 1;   // MCLR High (Not in reset)
+    
 }
 

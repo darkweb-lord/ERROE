@@ -48,7 +48,8 @@
 #include "pin_manager.h"
 #include "clock.h"
 #include "interrupt_manager.h"
-#include <libpic30.h>  
+#include <libpic30.h>
+#include "SPI.h"
 
 
 void SYSTEM_Initialize(void)
@@ -56,6 +57,9 @@ void SYSTEM_Initialize(void)
     PIN_MANAGER_Initialize();
     INTERRUPT_Initialize();
     CLOCK_Initialize();
+    // Boot the SPI module and wake up the ATSENSE301
+    SPI1_Initialize();
+    ATSENSE_HardwareReset();
 }
 
 /**

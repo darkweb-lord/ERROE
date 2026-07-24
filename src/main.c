@@ -9,6 +9,21 @@
 #include "I2c_Header.h"
 #include "LCD_I2C.h"
 #include "RTCC.h"
+#include "SPI.h"
+
+
+// ==========================================
+// ATSENSE301-H SPI CONFIGURATION
+// ==========================================
+// Metrology Registers
+#define REG_VRMS       0x1A  
+#define REG_IRMS       0x1B  
+#define REG_ACT_PWR    0x24  
+
+// Calibration Constants (To convert raw data to V/I/W)
+#define V_CAL_CONST    0.000145f 
+#define I_CAL_CONST    0.000032f
+
 
 // --- Hardware Definitions ---
 #define KEY_1 PORTAbits.RA8   // Scroll Down / Increment / Toggle
@@ -173,6 +188,11 @@ int main(void) {
                     break;
                     
                 case STATE_PAGE_0:
+                    if (btn_event == EVENT_K1_SHORT || btn_event == EVENT_K2_SHORT) {
+                        system_state = STATE_MENU; // Go back to menu on short press
+                    }
+                    break;
+                    
                 case STATE_PAGE_1:
                 case STATE_PAGE_2:
                     if (btn_event == EVENT_BOTH_LONG) system_state = STATE_MENU; // Go back
@@ -327,6 +347,30 @@ int main(void) {
                     break;
                     
                 case STATE_PAGE_0:
+                    {
+                        // Fetch raw 32-bit metrology data via SPI
+                        uint32_t raw_vrms = ATSENSE_ReadRegister(REG_VRMS);
+                        uint32_t raw_irms = ATSENSE_ReadRegister(REG_IRMS);
+                        uint32_t raw_power = ATSENSE_ReadRegister(REG_ACT_PWR);
+
+                        // Convert raw data to engineering units 
+                        double actual_vrms = (float)raw_vrms * V_CAL_CONST;
+                        double actual_irms = (float)raw_irms * I_CAL_CONST;
+                        double actual_power = ((float)raw_power * V_CAL_CONST * I_CAL_CONST) / 1000.0f; 
+
+                        // Format Line 1: Voltage and Current (Standard Text)
+                        LCD_SetCursor(0, 0);
+                        sprintf(lcdBuffer, "V:%-5.1f I:%-4.1f ", actual_vrms, actual_irms);
+                        LCD_PRINT(lcdBuffer);
+
+                        // Format Line 2: Active Power (Standard Text)
+                        LCD_SetCursor(1, 0);
+                        sprintf(lcdBuffer, "POWER:%-5.2f kW ", actual_power);
+                        LCD_PRINT(lcdBuffer);
+
+                    }
+                    break;
+                
                 case STATE_PAGE_1:
                 case STATE_PAGE_2:
                     //RTC_GetTime(&rtc_time);
