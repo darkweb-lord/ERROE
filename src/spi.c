@@ -1,4 +1,4 @@
-#include "SPI.h"
+#include "spi.h"
 
 // Define FCY for __delay_ms() - Ensure this matches your system clock
 #define FCY 16000000UL 

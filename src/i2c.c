@@ -1,7 +1,7 @@
 #define FCY 16000000UL      /* must come BEFORE libpic30.h */
 #include <xc.h>         // This loads the p24FV32KA304.h definitions automatically
 #include <libpic30.h>       /* provides __delay_us / __delay_ms */
-#include "I2c_Header.h"
+#include "i2c.h"
 
 void I2C1_BUS_RECOVERY(void)
 {

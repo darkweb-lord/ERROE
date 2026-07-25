@@ -2,8 +2,8 @@
 //IC - MCP79412
 
 
-#include "RTCC.h"
-#include "I2c_Header.h"
+#include "rtcc.h"
+#include "i2c.h"
 
 #define RTC_WRITE_ADDR 0xDE
 #define RTC_READ_ADDR  0xDF

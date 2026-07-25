@@ -10,8 +10,8 @@
 #include <libpic30.h>       
 
 // 3. Your local headers
-#include "LCD_I2C.h"
-#include "I2c_Header.h"
+#include "lcd.h"
+#include "i2c.h"
 
 //0x4E <--(0x27 << 1)  //0b 0100 1110 <--(0b 0010 0111 << 1) //78 <--(27 << 1)
 //0x7C <--(0x3E << 1)  //0b 0111 1100 <--(0b 0011 1110 << 1) //124 <--(62 << 1)
@@ -62,3 +62,15 @@ void LCD_PRINT(char* str) { while (*str) LCD_DATA((uint8_t)*str++);  }
 
 // Clear the LCD screen
 void LCD_CLEAR(void){ LCD_CMD(0x01); __delay_ms(3); }
+
+void LCD_CREATE_CUSTOM_CHAR(unsigned char location, unsigned char *charmap)
+{
+    unsigned char i;
+    location &= 0x07;
+    LCD_CMD(0x40 |(location << 3));
+    for(i = 0; i < 8; i++){ 
+        LCD_DATA(charmap[i]);
+    }
+}
+
+void LCD_PRINT_CUSTOME_CHAR(unsigned char location) {   LCD_DATA(location); }

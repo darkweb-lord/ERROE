@@ -6,10 +6,10 @@
 #include <stdio.h>
 #include <string.h>
 #include "system.h"
-#include "I2c_Header.h"
-#include "LCD_I2C.h"
-#include "RTCC.h"
-#include "SPI.h"
+#include "i2c.h"
+#include "lcd.h"
+#include "rtcc.h"
+#include "spi.h"
 
 
 // ==========================================
@@ -30,6 +30,17 @@
 #define KEY_2 PORTCbits.RC2   // Scroll Up / Decrement / Toggle
 #define BTN_PRESSED 0         // Assuming buttons pull to Ground
 
+#define LCD_CUSTOM_CHAR 5
+#define LCD_CUSTOM_ROW 8
+
+unsigned char loading_CGROM[LCD_CUSTOM_CHAR][LCD_CUSTOM_ROW] = {
+    { 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10 }, //0
+    { 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18 }, //1
+    { 0x1C, 0x1C, 0x1C, 0x1C, 0x1C, 0x1C, 0x1C, 0x1C }, //2
+    { 0x1E, 0x1E, 0x1E, 0x1E, 0x1E, 0x1E, 0x1E, 0x1E }, //3
+    { 0x1F, 0x1F, 0x1F, 0x1F, 0x1F, 0x1F, 0x1F, 0x1F }, //4
+};
+
 // --- System States ---
 typedef enum {
     STATE_BOOT,
@@ -40,7 +51,8 @@ typedef enum {
     STATE_PAGE_2,
     STATE_PAGE_TIME,
     STATE_EDIT_RTC,
-    STATE_SAVE_PROMPT   // New State for Save confirmation
+    STATE_SAVE_PROMPT,   // New State for Save confirmation
+    STATE_REBOOT
 } SystemState_t;
 
 // --- Button Event Types ---
@@ -55,8 +67,8 @@ typedef enum {
 SystemState_t system_state = STATE_BOOT;
 
 //Menu setup including Exit option
-#define NUM_MENU_ITEMS 5
-const char* menu_items[NUM_MENU_ITEMS] = {"1.Page_0", "2.Page_1", "3.Page_2", "4.Time/Date","5.Menu Exit"};
+#define NUM_MENU_ITEMS 6
+const char* menu_items[NUM_MENU_ITEMS] = {"1.Page_0", "2.Page_1", "3.Page_2", "4.Time/Date","5.Menu Exit","6.Reboot"};
 int8_t menu_index = 0;
 
 uint8_t update_screen = 1;
@@ -106,26 +118,25 @@ ButtonEvent_t Read_Buttons(void) {
 // --- Main Application ---
 int main(void) {
     SYSTEM_Initialize();
-    __delay_ms(400);          /* FIX C2: rails + LSF0108 EN bias (RC=200ms; 4.3V @ ~393ms) */
+    __delay_ms(200);          /* FIX C2: rails + LSF0108 EN bias (RC=200ms; 4.3V @ ~393ms) */
     I2C1_BUS_RECOVERY();      /* FIX C5: free a stuck slave before configuring the module */
     I2C_INIT();
     LCD_INIT();
     RTC_Init();
-    /*******************************************************************************************
+    
     // 1. Check the cause of the Reset
-    if (RCONbits.SWR == 1) {
-        // A Software Reset occurred!
-        LCD_SetCursor(0,0);
-        LCD_PRINT("Software Reboot!");
+    if (RCONbits.SWR == 1) {// A Software Reset occurred!
         RCONbits.SWR = 0;  // You MUST clear the flag so it is ready for next time
-    } else if (RCONbits.POR == 1) {
-        // A standard Power-On Reset occurred (plugged into power)
+    }
+    /*******************************************************************************************
+        if (RCONbits.POR == 1) { // A standard Power-On Reset occurred (plugged into power)
         LCD_SetCursor(1,0);
         LCD_PRINT("Power Applied!  ");
         RCONbits.POR = 0; // Clear the Power-On flag
     }
     __delay_ms(2000); LCD_CLEAR();
     *************************************************************************************/
+    
     // Configure Pins for Buttons
     TRISAbits.TRISA8 = 1; // Key 1 Input
     TRISCbits.TRISC2 = 1; // Key 2 Input
@@ -140,6 +151,9 @@ int main(void) {
     // ==========================================
     uint16_t scroll_tick = 0; // Tracks the 10ms loop to control speed
     uint16_t scroll_pos = 0;  // Tracks which letter is currently first on the LCD
+    
+    for(uint8_t i = 0; i < LCD_CUSTOM_CHAR; i++) { LCD_CREATE_CUSTOM_CHAR(i ,loading_CGROM[i]); }
+    LCD_SetCursor(0,0);
     
     while (1) { 
         /************************************************************************
@@ -179,8 +193,9 @@ int main(void) {
                         if (menu_index == 1) system_state = STATE_PAGE_1;
                         if (menu_index == 2) system_state = STATE_PAGE_2;
                         if (menu_index == 3) system_state = STATE_PAGE_TIME;
-                        if (menu_index == 4) { 
-                            system_state = STATE_HOME;
+                        if (menu_index == 4) system_state = STATE_HOME;
+                        if (menu_index == 5) {
+                            system_state = STATE_REBOOT;
                             menu_index = 0; 
                             LCD_CLEAR();
                         }
@@ -245,6 +260,12 @@ int main(void) {
                             RTC_SetTime(&edit_time); // Write new time to MCP79412
                         }
                         system_state = STATE_PAGE_TIME; // Return to view mode
+                    }
+                    break;
+                    
+                case STATE_REBOOT:
+                    if (btn_event == EVENT_BOTH_LONG) {
+                        system_state = STATE_REBOOT; // Go back to menu on short press
                     }
                     break;
             }
@@ -415,6 +436,22 @@ int main(void) {
                         LCD_SetCursor(1,0); LCD_PRINT(">YES     NO     ");
                     } else {
                         LCD_SetCursor(1,0); LCD_PRINT(" YES    >NO     ");
+                    }
+                    break;
+                case STATE_REBOOT:
+                    {
+                        LCD_CLEAR();
+                        LCD_SetCursor(0,0);
+                        LCD_PRINT("System Reboot");
+                        for(uint8_t i = 0; i < 16; i++){
+                            LCD_SetCursor(1,i);
+                            for(uint8_t j = 0; j < LCD_CUSTOM_CHAR; j++){
+                                LCD_SetCursor(1,i);
+                                LCD_PRINT_CUSTOME_CHAR(j);
+                                __delay_ms(30);
+                            }
+                        }
+                        __asm__ volatile ("RESET");
                     }
                     break;
             }

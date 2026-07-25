@@ -49,7 +49,9 @@
 #include "clock.h"
 #include "interrupt_manager.h"
 #include <libpic30.h>
-#include "SPI.h"
+#include "spi.h"
+#include "i2c.h"
+#include "rtcc.h"
 
 
 void SYSTEM_Initialize(void)
